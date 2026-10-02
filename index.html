@@ -36,17 +36,23 @@
         .tab:hover { background: #d1d1d6; }
         .tab.active { background: var(--putih); box-shadow: 0 -3px 0 var(--biru); color: var(--biru); }
 
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; }
+        /* ✅ GRID 5 KOLOM × 10 BARIS — KOTAK LEBIH BESAR */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); /* 5 kolom tetap */
+            gap: 12px; /* Jarak antar kotak lebih renggang */
+        }
         .box {
-            background: var(--putih); border-radius: 12px; padding: 14px 6px; text-align: center;
-            cursor: pointer; border: 2px solid transparent; transition: all 0.25s ease;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            background: var(--putih); border-radius: 12px; padding: 18px 10px; /* Lebih tinggi */
+            text-align: center; cursor: pointer; border: 2px solid transparent;
+            transition: all 0.25s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            min-height: 80px; /* Ukuran minimal kotak diperbesar */
         }
         .box:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
         .box.unpaid { background: #fff2f2; border-color: var(--merah); }
         .box.paid { background: #f2fff4; border-color: var(--hijau); }
-        .box .id { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-        .box .date { font-size: 11px; color: #636366; }
+        .box .id { font-size: 20px; font-weight: 700; margin-bottom: 6px; } /* Tulisan lebih besar */
+        .box .date { font-size: 13px; color: #636366; } /* Tanggal lebih jelas */
 
         .modal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none;
@@ -79,6 +85,14 @@
         .stat-bar { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; flex-wrap: wrap; }
         .stat-item { font-size: 14px; }
         .stat-item b { color: var(--biru); }
+
+        /* Di HP tetap 5 kolom, sedikit disesuaikan */
+        @media (max-width: 480px) {
+            .grid { gap: 8px; }
+            .box { padding: 14px 6px; min-height: 70px; }
+            .box .id { font-size: 17px; }
+            .box .date { font-size: 11px; }
+        }
     </style>
 </head>
 <body>
@@ -127,7 +141,7 @@
 <div class="modal" id="modalSandi">
     <div class="modal-content">
         <h3>🔐 Masukkan Kata Sandi</h3>
-        <input type="password" id="inputSandi" placeholder="Kata sandi (default: 12345)">
+        <input type="password" id="inputSandi" placeholder="Kata sandi: 12345">
         <div class="btn-group">
             <button class="btn-cancel" id="btnBatalSandi">Batal</button>
             <button class="btn-pass-ok" id="btnKonfirmasi">Konfirmasi</button>
@@ -142,7 +156,7 @@
 </div>
 
 <script>
-const KATA_SANDI = "12345"; // Bisa diubah sesuai keinginan
+const KATA_SANDI = "12345";
 
 const monthSelect = document.getElementById('monthSelect');
 const tabsContainer = document.getElementById('tabs');
@@ -168,7 +182,6 @@ let currentIndex = null;
 let tindakanLulus = null;
 let payments = {};
 
-// Simpan & muat data
 function muatData() {
     const simpanan = localStorage.getItem('dataIuran');
     if (simpanan) payments = JSON.parse(simpanan);
@@ -177,7 +190,6 @@ function simpanData() {
     localStorage.setItem('dataIuran', JSON.stringify(payments));
 }
 
-// Pilihan bulan
 function isiPilihanBulan() {
     const daftarBulan = [];
     const sekarang = new Date();
@@ -195,7 +207,6 @@ function isiPilihanBulan() {
     monthSelect.value = kodeSekarang;
 }
 
-// Ganti tab blok
 tabsContainer.addEventListener('click', e => {
     if (!e.target.classList.contains('tab')) return;
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -204,7 +215,6 @@ tabsContainer.addEventListener('click', e => {
     tampilkanGrid();
 });
 
-// Tampilkan kotak & hitung statistik
 function tampilkanGrid() {
     gridContainer.innerHTML = '';
     const periode = monthSelect.value;
@@ -263,7 +273,7 @@ btnHapus.addEventListener('click', () => {
 monthSelect.addEventListener('change', tampilkanGrid);
 btnSelesai.addEventListener('click', () => location.reload());
 
-// --- PROTEKSI KATA SANDI ---
+// Proteksi Kata Sandi
 function bukaKataSandi(tindakan) {
     tindakanLulus = tindakan;
     inputSandi.value = '';
@@ -311,11 +321,9 @@ function lanjutkanTindakan() {
     tindakanLulus = null;
 }
 
-// Pasang ke tombol
 btnUrung.addEventListener('click', () => bukaKataSandi('resetBlok'));
 btnResetSemua.addEventListener('click', () => bukaKataSandi('resetSemua'));
 
-// Jalankan
 muatData();
 isiPilihanBulan();
 tampilkanGrid();
