@@ -1,114 +1,197 @@
+```html
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistem Iuran Perumahan</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #f4f7f6; padding: 20px; color: #333; }
-    .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-    
-    h1 { text-align: center; margin-bottom: 20px; color: #1e293b; font-size: 1.8rem; }
-    
-    .control-panel { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; background: #f8fafc; padding: 15px; border-radius: 8px; }
-    .period-selector { display: flex; align-items: center; gap: 10px; font-weight: 600; }
-    input[type="month"] { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; outline: none; }
-    
-    .legend { display: flex; gap: 15px; font-size: 0.9rem; font-weight: 500; }
-    .legend-item { display: flex; align-items: center; gap: 6px; }
-    .color-box { width: 16px; height: 16px; border-radius: 4px; }
-    .bg-lunas { background-color: #22c55e; }
-    .bg-belum { background-color: #ef4444; }
-
-    /* Tabs Styling */
-    .tabs { display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 20px; gap: 5px; overflow-x: auto; }
-    .tab-btn { padding: 10px 20px; border: none; background: none; font-size: 1rem; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; }
-    .tab-btn:hover { color: #0f172a; }
-    .tab-btn.active { color: #2563eb; border-bottom-color: #2563eb; }
-
-    /* Grid Rumah */
-    .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; margin-top: 10px; }
-    .house-card { padding: 15px 10px; border-radius: 8px; color: white; text-align: center; cursor: pointer; font-weight: bold; transition: transform 0.15s, box-shadow 0.15s; user-select: none; }
-    .house-card:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-    .house-card .num { font-size: 1.2rem; margin-bottom: 4px; }
-    .house-card .status-text { font-size: 0.75rem; font-weight: 400; opacity: 0.9; }
-    .house-card .pay-date { font-size: 0.7rem; font-weight: 300; opacity: 0.85; margin-top: 2px; }
-
-    /* Modal Styling */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
-    .modal-content { background: white; padding: 25px; border-radius: 10px; width: 100%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-    .modal-title { margin-bottom: 15px; font-size: 1.2rem; color: #0f172a; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #475569; }
-    .form-group input { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-    .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
-    .btn-primary { background: #2563eb; color: white; }
-    .btn-secondary { background: #94a3b8; color: white; }
-    .btn-danger { background: #ef4444; color: white; margin-right: auto; }
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    /* Custom scrollbar untuk Tab */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
   </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-12 antialiased">
 
-<div class="container">
-  <h1>Pencatatan Iuran Perumahan</h1>
+  <!-- Header / Navbar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-3 w-full sm:w-auto">
+        <div class="p-2.5 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-500/20">
+          <i data-lucide="home" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-slate-900 leading-tight">Iuran Perumahan</h1>
+          <p class="text-xs text-slate-500">Monitoring & Pencatatan Kas Bulanan</p>
+        </div>
+      </div>
 
-  <div class="control-panel">
-    <div class="period-selector">
-      <label for="monthPicker">Periode Bulan:</label>
-      <input type="month" id="monthPicker">
+      <!-- Selector Periode Bulan -->
+      <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200 w-full sm:w-auto justify-between">
+        <span class="text-xs font-semibold text-slate-500 pl-2 flex items-center gap-1.5">
+          <i data-lucide="calendar" class="w-4 h-4"></i> Periode:
+        </span>
+        <input type="month" id="monthPicker" class="bg-white text-slate-800 text-sm font-semibold py-1.5 px-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition shadow-sm cursor-pointer">
+      </div>
     </div>
-    <div class="legend">
-      <div class="legend-item"><div class="color-box bg-lunas"></div> Lunas</div>
-      <div class="legend-item"><div class="color-box bg-belum"></div> Belum Bayar</div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+
+    <!-- Grid Ringkasan Statistik -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
+        <div class="p-3 bg-slate-100 text-slate-600 rounded-xl">
+          <i data-lucide="building" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-xs text-slate-500 font-medium">Total Rumah</p>
+          <p id="statTotal" class="text-lg sm:text-xl font-bold text-slate-800">0</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
+        <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+          <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-xs text-slate-500 font-medium">Sudah Bayar</p>
+          <p id="statLunas" class="text-lg sm:text-xl font-bold text-emerald-600">0</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
+        <div class="p-3 bg-rose-50 text-rose-600 rounded-xl">
+          <i data-lucide="x-circle" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-xs text-slate-500 font-medium">Belum Bayar</p>
+          <p id="statBelum" class="text-lg sm:text-xl font-bold text-rose-600">0</p>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3 col-span-2 md:col-span-1">
+        <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+          <i data-lucide="percent" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <p class="text-xs text-slate-500 font-medium">Capaian</p>
+          <p id="statPersen" class="text-lg sm:text-xl font-bold text-blue-600">0%</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Utama Tab & Grid -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 sm:p-6">
+      
+      <!-- Top Control / Legend & Tabs -->
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
+        <!-- Tabs Blok -->
+        <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto no-scrollbar pb-1 md:pb-0" id="tabContainer">
+          <!-- Tab items inject via JS -->
+        </div>
+
+        <!-- Legend Status Warna -->
+        <div class="flex items-center gap-4 text-xs font-medium text-slate-600 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 self-end md:self-auto">
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-emerald-500"></span> Lunas
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-rose-500"></span> Belum Bayar
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid Kotak-Kotak Rumah -->
+      <div id="gridContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+        <!-- Grid items inject via JS -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Konfirmasi / Edit Status Bayar -->
+  <div id="paymentModal" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all scale-100">
+      
+      <div class="flex justify-between items-center mb-4">
+        <div class="flex items-center gap-3">
+          <div id="modalIconBg" class="p-2.5 rounded-xl bg-blue-50 text-blue-600">
+            <i data-lucide="home" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 id="modalTitle" class="text-lg font-bold text-slate-900">Rumah A1</h3>
+            <p id="modalSubtitle" class="text-xs text-slate-500">Update Status Pembayaran</p>
+          </div>
+        </div>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 my-5">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Pembayaran</label>
+          <div class="relative">
+            <input type="date" id="payDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 pt-2">
+        <button id="btnReset" onclick="resetPayment()" class="w-full py-2.5 px-4 bg-rose-50 text-rose-600 hover:bg-rose-100 text-sm font-semibold rounded-xl transition flex items-center justify-center gap-1.5">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Batalkan Lunas
+        </button>
+        <button onclick="savePayment()" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-1.5">
+          <i data-lucide="check" class="w-4 h-4"></i> Simpan
+        </button>
+      </div>
+
     </div>
   </div>
-
-  <div class="tabs" id="tabContainer"></div>
-  <div class="grid-container" id="gridContainer"></div>
-</div>
-
-<!-- Modal Update Pembayaran -->
-<div class="modal" id="paymentModal">
-  <div class="modal-content">
-    <h3 class="modal-title" id="modalTitle">Konfirmasi Pembayaran</h3>
-    <div class="form-group">
-      <label for="payDate">Tanggal Pembayaran:</label>
-      <input type="date" id="payDate">
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-danger" id="btnReset" onclick="resetPayment()">Batal Lunas</button>
-      <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
-      <button class="btn btn-primary" onclick="savePayment()">Simpan</button>
-    </div>
-  </div>
-</div>
 
 <script>
-  // === CONFIG SUPABASE ===
+  // === CONFIGURASI SUPABASE ===
   const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT_ID.supabase.co';
   const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
   const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // === DATA BLOK & NOMOR RUMAH ===
+  // === DATA MASTER BLOK & RUMAH ===
   const HOUSING_DATA = {
-    'Blok A': Array.from({ length: 15 }, (_, i) => `A${i + 1}`),
+    'Blok A': Array.from({ length: 16 }, (_, i) => `A${i + 1}`),
     'Blok B': Array.from({ length: 12 }, (_, i) => `B${i + 1}`),
-    'Blok C': Array.from({ length: 10 }, (_, i) => `C${i + 1}`)
+    'Blok C': Array.from({ length: 10 }, (_, i) => `C${i + 1}`),
+    'Blok D': Array.from({ length: 8 }, (_, i) => `D${i + 1}`)
   };
 
-  let activeBlock = 'Blok A';
-  let paymentRecords = {}; // Format: { "A1": { status: true, date: "2026-10-01" } }
+  let activeBlock = Object.keys(HOUSING_DATA)[0];
+  let paymentRecords = {}; 
   let selectedHouseNum = null;
 
-  // Set default bulan ke bulan saat ini
+  // Inisialisasi Bulan Sekarang (YYYY-MM)
   const monthPicker = document.getElementById('monthPicker');
-  const today = new Date();
-  monthPicker.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  const now = new Date();
+  monthPicker.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
     initTabs();
     fetchAndRenderData();
 
@@ -121,12 +204,16 @@
     
     Object.keys(HOUSING_DATA).forEach(block => {
       const btn = document.createElement('button');
-      btn.className = `tab-btn ${block === activeBlock ? 'active' : ''}`;
+      const isActive = block === activeBlock;
+      btn.className = `px-4 py-2 rounded-xl text-sm font-semibold transition whitespace-nowrap ${
+        isActive 
+          ? 'bg-slate-900 text-white shadow-sm' 
+          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+      }`;
       btn.innerText = block;
       btn.onclick = () => {
         activeBlock = block;
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        initTabs();
         renderGrid();
       };
       tabContainer.appendChild(btn);
@@ -137,7 +224,7 @@
     const currentPeriod = monthPicker.value;
     if (!currentPeriod) return;
 
-    // Load data iuran dari Supabase berdasarkan periode
+    // Ambil data dari Supabase
     const { data, error } = await supabase
       .from('iuran_rumah')
       .select('*')
@@ -145,10 +232,8 @@
 
     if (error) {
       console.error('Gagal mengambil data:', error.message);
-      return;
     }
 
-    // Mapping data ke object internal
     paymentRecords = {};
     if (data) {
       data.forEach(row => {
@@ -161,7 +246,30 @@
       });
     }
 
+    updateStats();
     renderGrid();
+  }
+
+  function updateStats() {
+    let totalAllHouses = 0;
+    Object.values(HOUSING_DATA).forEach(list => totalAllHouses += list.length);
+
+    let lunasCount = 0;
+    Object.keys(HOUSING_DATA).forEach(block => {
+      HOUSING_DATA[block].forEach(num => {
+        if (paymentRecords[`${block}_${num}`]?.status) {
+          lunasCount++;
+        }
+      });
+    });
+
+    const belumCount = totalAllHouses - lunasCount;
+    const percentage = totalAllHouses > 0 ? Math.round((lunasCount / totalAllHouses) * 100) : 0;
+
+    document.getElementById('statTotal').innerText = totalAllHouses;
+    document.getElementById('statLunas').innerText = lunasCount;
+    document.getElementById('statBelum').innerText = belumCount;
+    document.getElementById('statPersen').innerText = `${percentage}%`;
   }
 
   function renderGrid() {
@@ -176,32 +284,59 @@
       const isPaid = record && record.status;
 
       const card = document.createElement('div');
-      card.className = `house-card ${isPaid ? 'bg-lunas' : 'bg-belum'}`;
+      card.className = `relative p-4 rounded-2xl border transition duration-200 cursor-pointer flex flex-col justify-between h-28 select-none ${
+        isPaid 
+          ? 'bg-emerald-500/10 border-emerald-500/30 hover:border-emerald-500 text-emerald-950' 
+          : 'bg-rose-500/10 border-rose-500/30 hover:border-rose-500 text-rose-950'
+      }`;
+      
       card.onclick = () => openModal(houseNum, isPaid, record ? record.date : null);
 
       card.innerHTML = `
-        <div class="num">${houseNum}</div>
-        <div class="status-text">${isPaid ? 'Lunas' : 'Belum Bayar'}</div>
-        ${isPaid && record.date ? `<div class="pay-date">${formatDate(record.date)}</div>` : ''}
+        <div class="flex justify-between items-start">
+          <span class="text-base font-extrabold tracking-wide">${houseNum}</span>
+          <span class="p-1 rounded-full ${isPaid ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}">
+            <i data-lucide="${isPaid ? 'check' : 'clock'}" class="w-3.5 h-3.5"></i>
+          </span>
+        </div>
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-wider opacity-75">
+            ${isPaid ? 'Lunas' : 'Belum Bayar'}
+          </p>
+          <p class="text-xs font-medium mt-0.5 opacity-90">
+            ${isPaid && record.date ? formatDate(record.date) : '-'}
+          </p>
+        </div>
       `;
 
       gridContainer.appendChild(card);
     });
+
+    lucide.createIcons();
   }
 
   function openModal(houseNum, isPaid, currentDate) {
     selectedHouseNum = houseNum;
-    document.getElementById('modalTitle').innerText = `Rumah ${houseNum} (${activeBlock})`;
+    document.getElementById('modalTitle').innerText = `${activeBlock} - Rumah ${houseNum}`;
     
     const payDateInput = document.getElementById('payDate');
     payDateInput.value = currentDate || new Date().toISOString().split('T')[0];
 
-    document.getElementById('btnReset').style.display = isPaid ? 'block' : 'none';
-    document.getElementById('paymentModal').style.display = 'flex';
+    const btnReset = document.getElementById('btnReset');
+    btnReset.style.display = isPaid ? 'flex' : 'none';
+
+    const modalIconBg = document.getElementById('modalIconBg');
+    if(isPaid) {
+      modalIconBg.className = 'p-2.5 rounded-xl bg-emerald-50 text-emerald-600';
+    } else {
+      modalIconBg.className = 'p-2.5 rounded-xl bg-blue-50 text-blue-600';
+    }
+
+    document.getElementById('paymentModal').classList.remove('hidden');
   }
 
   function closeModal() {
-    document.getElementById('paymentModal').style.display = 'none';
+    document.getElementById('paymentModal').classList.add('hidden');
     selectedHouseNum = null;
   }
 
@@ -257,11 +392,11 @@
 
   function formatDate(strDate) {
     if (!strDate) return '';
-    const parts = strDate.split('-');
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    const [year, month, day] = strDate.split('-');
+    return `${day}/${month}/${year}`;
   }
 </script>
 
 </body>
-  </html>
-  
+</html>
+```
