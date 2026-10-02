@@ -31,7 +31,7 @@
     .stat-label { font-size: 12px; font-weight: 600; color: #64748b; }
     .stat-value { font-size: 24px; font-weight: 800; margin-top: 4px; }
 
-    /* Main Card / Grid */
+    /* Content Card */
     .content-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
     .card-top { display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px; }
     @media (min-width: 640px) { .card-top { flex-direction: row; justify-content: space-between; align-items: center; } }
@@ -51,8 +51,8 @@
     .dot-rose { background: #f43f5e; }
 
     /* Kotak Rumah Grid */
-    .house-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 18px; }
-    @media (min-width: 480px) { .house-grid { grid-template-columns: repeat(6, 1fr); } }
+    .house-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 18px; }
+    @media (min-width: 480px) { .house-grid { grid-template-columns: repeat(5, 1fr); } }
     @media (min-width: 640px) { .house-grid { grid-template-columns: repeat(8, 1fr); } }
     @media (min-width: 900px) { .house-grid { grid-template-columns: repeat(10, 1fr); } }
 
@@ -68,19 +68,19 @@
       flex-direction: column; 
       justify-content: space-between; 
       align-items: center; 
-      min-height: 72px; 
+      min-height: 75px; 
       box-shadow: 0 2px 4px rgba(0,0,0,0.08); 
       transition: transform 0.15s, box-shadow 0.15s;
     }
-    .house-card:active { transform: scale(0.94); }
+    .house-card:active { transform: scale(0.92); }
     .house-card.lunas { background: linear-gradient(135deg, #10b981, #059669); border: 1px solid #047857; }
     .house-card.belum { background: linear-gradient(135deg, #f43f5e, #e11d48); border: 1px solid #be123c; }
 
-    .house-block { font-size: 10px; font-weight: 700; opacity: 0.85; text-transform: uppercase; }
+    .house-block { font-size: 10px; font-weight: 700; opacity: 0.9; text-transform: uppercase; }
     .house-number { font-size: 16px; font-weight: 800; margin: 2px 0; }
-    .house-date { font-size: 10px; font-weight: 500; opacity: 0.9; }
+    .house-date { font-size: 10px; font-weight: 600; opacity: 0.95; }
 
-    /* Modal */
+    /* Modal Pop-up */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
     .modal-card { background: #fff; width: 100%; max-width: 360px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -137,7 +137,7 @@
       </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Main Content Card -->
     <div class="content-card">
       <div class="card-top">
         <div class="tabs-area" id="tabContainer"></div>
@@ -147,12 +147,12 @@
         </div>
       </div>
 
-      <!-- Grid 50 Kotak Rumah -->
+      <!-- Area 50 Kotak Rumah -->
       <div class="house-grid" id="gridContainer"></div>
     </div>
   </main>
 
-  <!-- Modal -->
+  <!-- Pop-up Pilih Tanggal -->
   <div id="paymentModal" class="modal-overlay">
     <div class="modal-card">
       <div class="modal-header">
@@ -161,25 +161,33 @@
       </div>
 
       <div class="form-group">
-        <label for="payDate">Tanggal Pembayaran:</label>
+        <label for="payDate">Pilih Tanggal Bayar:</label>
         <input type="date" id="payDate">
       </div>
 
       <div class="btn-stack">
-        <button onclick="savePayment()" class="btn btn-emerald">Simpan (Set Lunas)</button>
-        <button id="btnReset" onclick="resetPayment()" class="btn btn-rose-light">Batal Lunas (Set Belum Bayar)</button>
+        <button onclick="savePayment()" class="btn btn-emerald">Simpan & Set Lunas (Hijau)</button>
+        <button id="btnReset" onclick="resetPayment()" class="btn btn-rose-light">Batal Lunas (Set Merah)</button>
         <button onclick="closeModal()" class="btn btn-slate-light">Tutup</button>
       </div>
     </div>
   </div>
 
   <script>
-    // === CONFIG SUPABASE ===
+    // === CONFIG SUPABASE (Aman jika belum diisi) ===
     const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT_ID.supabase.co';
     const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-    const supabase = (SUPABASE_URL.includes('YOUR_SUPABASE')) ? null : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    let supabase = null;
+    if (typeof window.supabase !== 'undefined' && !SUPABASE_URL.includes('YOUR_SUPABASE')) {
+      try {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      } catch (e) {
+        console.warn('Supabase belum terkonfigurasi, berjalan dalam mode lokal.');
+      }
+    }
 
-    // === GENERATE 50 RUMAH PER BLOK ===
+    // === MEMBUAT 50 RUMAH PER BLOK (Nomor 01 - 50) ===
     const generateHouses = (prefix, count) => {
       return Array.from({ length: count }, (_, i) => {
         const num = String(i + 1).padStart(2, '0');
@@ -201,11 +209,12 @@
     const today = new Date();
     monthPicker.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
-    document.addEventListener('DOMContentLoaded', () => {
+    // Fungsi Utama Inisialisasi Aplikasi
+    function initApp() {
       initTabs();
       fetchAndRenderData();
       monthPicker.addEventListener('change', fetchAndRenderData);
-    });
+    }
 
     function initTabs() {
       const tabContainer = document.getElementById('tabContainer');
@@ -215,7 +224,7 @@
         const btn = document.createElement('button');
         const isActive = block === activeBlock;
         btn.className = `tab-btn ${isActive ? 'active' : 'inactive'}`;
-        btn.innerText = `${block} (50)`;
+        btn.innerText = `${block} (50 Rumah)`;
         btn.onclick = () => {
           activeBlock = block;
           initTabs();
@@ -227,24 +236,27 @@
 
     async function fetchAndRenderData() {
       const currentPeriod = monthPicker.value;
-      if (!currentPeriod) return;
 
-      if (supabase) {
-        const { data, error } = await supabase
-          .from('iuran_rumah')
-          .select('*')
-          .eq('bulan_tahun', currentPeriod);
+      if (supabase && currentPeriod) {
+        try {
+          const { data, error } = await supabase
+            .from('iuran_rumah')
+            .select('*')
+            .eq('bulan_tahun', currentPeriod);
 
-        if (!error && data) {
-          paymentRecords = {};
-          data.forEach(row => {
-            if (row.status_bayar) {
-              paymentRecords[`${row.blok}_${row.nomor_rumah}`] = {
-                status: true,
-                date: row.tanggal_bayar
-              };
-            }
-          });
+          if (!error && data) {
+            paymentRecords = {};
+            data.forEach(row => {
+              if (row.status_bayar) {
+                paymentRecords[`${row.blok}_${row.nomor_rumah}`] = {
+                  status: true,
+                  date: row.tanggal_bayar
+                };
+              }
+            });
+          }
+        } catch (err) {
+          console.error('Gagal mengambil data Supabase:', err);
         }
       }
 
@@ -278,7 +290,7 @@
         gridContainer.appendChild(card);
       });
 
-      // Update Ringkasan Angka
+      // Update Statistik Angka
       const total = houses.length;
       document.getElementById('statTotal').innerText = total;
       document.getElementById('statPaid').innerText = totalPaidCount;
@@ -308,22 +320,28 @@
       const key = `${activeBlock}_${selectedHouseNum}`;
 
       if (!payDate) {
-        alert('Pilih tanggal pembayaran!');
+        alert('Pilih tanggal pembayaran terlebih dahulu!');
         return;
       }
 
+      // Simpan di memori lokal
       paymentRecords[key] = { status: true, date: payDate };
 
+      // Simpan ke Supabase jika terhubung
       if (supabase) {
-        await supabase
-          .from('iuran_rumah')
-          .upsert({
-            blok: activeBlock,
-            nomor_rumah: selectedHouseNum,
-            bulan_tahun: currentPeriod,
-            status_bayar: true,
-            tanggal_bayar: payDate
-          }, { onConflict: 'blok,nomor_rumah,bulan_tahun' });
+        try {
+          await supabase
+            .from('iuran_rumah')
+            .upsert({
+              blok: activeBlock,
+              nomor_rumah: selectedHouseNum,
+              bulan_tahun: currentPeriod,
+              status_bayar: true,
+              tanggal_bayar: payDate
+            }, { onConflict: 'blok,nomor_rumah,bulan_tahun' });
+        } catch (err) {
+          console.error('Error saat menyimpan ke Supabase:', err);
+        }
       }
 
       closeModal();
@@ -337,15 +355,19 @@
       delete paymentRecords[key];
 
       if (supabase) {
-        await supabase
-          .from('iuran_rumah')
-          .upsert({
-            blok: activeBlock,
-            nomor_rumah: selectedHouseNum,
-            bulan_tahun: currentPeriod,
-            status_bayar: false,
-            tanggal_bayar: null
-          }, { onConflict: 'blok,nomor_rumah,bulan_tahun' });
+        try {
+          await supabase
+            .from('iuran_rumah')
+            .upsert({
+              blok: activeBlock,
+              nomor_rumah: selectedHouseNum,
+              bulan_tahun: currentPeriod,
+              status_bayar: false,
+              tanggal_bayar: null
+            }, { onConflict: 'blok,nomor_rumah,bulan_tahun' });
+        } catch (err) {
+          console.error('Error saat mereset di Supabase:', err);
+        }
       }
 
       closeModal();
@@ -356,6 +378,13 @@
       if (!strDate) return '';
       const parts = strDate.split('-');
       return `${parts[2]}/${parts[1]}`;
+    }
+
+    // Jalankan aplikasi setelah DOM siap
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
     }
   </script>
 </body>
