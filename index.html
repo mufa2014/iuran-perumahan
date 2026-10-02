@@ -1,391 +1,209 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Iuran Perumahan</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    body { background-color: #f1f5f9; color: #334155; padding-bottom: 40px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencatatan Iuran Perumahan</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+        body { background: #f5f5f7; padding: 16px; max-width: 900px; margin: 0 auto; }
+        
+        .header { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        h1 { font-size: 18px; color: #1d1d1f; margin-bottom: 12px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        select { padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px; }
+        .legend { display: flex; gap: 16px; font-size: 13px; }
+        .legend span { display: flex; align-items: center; gap: 6px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .dot.paid { background: #34c759; }
+        .dot.unpaid { background: #ff3b30; }
 
-    /* Header */
-    header { background: #ffffff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 20; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .header-container { max-width: 1100px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; }
-    .title-area { display: flex; align-items: center; gap: 10px; }
-    .icon-box { width: 40px; height: 40px; background: #2563eb; color: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; }
-    .title-area h1 { font-size: 16px; color: #0f172a; font-weight: 700; }
-    .title-area p { font-size: 11px; color: #64748b; }
-    
-    .period-box { display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 6px 10px; border-radius: 8px; border: 1px solid #cbd5e1; }
-    .period-box label { font-size: 12px; font-weight: 600; color: #64748b; }
-    .period-box input { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; padding: 4px 8px; font-size: 13px; font-weight: 600; outline: none; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px; }
+        .box {
+            background: #fff; border-radius: 10px; padding: 14px 8px; text-align: center;
+            cursor: pointer; border: 2px solid transparent; transition: all 0.25s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+        }
+        .box:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .box.unpaid { background: #fff2f2; border-color: #ff3b30; }
+        .box.paid { background: #f2fff4; border-color: #34c759; }
+        .box .num { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+        .box .date { font-size: 10px; color: #666; }
 
-    /* Main Container */
-    main { max-width: 1100px; margin: 20px auto 0; padding: 0 16px; }
+        .modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none;
+            align-items: center; justify-content: center; padding: 20px; z-index: 999;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: #fff; padding: 24px; border-radius: 16px; width: 100%; max-width: 320px;
+        }
+        .modal-content h3 { margin-bottom: 16px; font-size: 16px; }
+        input[type="date"] {
+            width: 100%; padding: 10px; margin-bottom: 16px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px;
+        }
+        .btn-group { display: flex; gap: 10px; }
+        button {
+            flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 14px; cursor: pointer;
+            font-weight: 500;
+        }
+        .btn-cancel { background: #e5e5e7; color: #1d1d1f; }
+        .btn-save { background: #007aff; color: #fff; }
+        .btn-delete { background: #ff3b30; color: #fff; margin-top: 8px; width: 100%; }
 
-    /* Stats Grid */
-    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
-    @media (min-width: 640px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
-    .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
-    .stat-label { font-size: 12px; font-weight: 600; color: #64748b; }
-    .stat-value { font-size: 24px; font-weight: 800; margin-top: 4px; }
-
-    /* Content Card */
-    .content-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-    .card-top { display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 14px; }
-    @media (min-width: 640px) { .card-top { flex-direction: row; justify-content: space-between; align-items: center; } }
-
-    /* Tabs */
-    .tabs-area { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
-    .tab-btn { border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-    .tab-btn.active { background: #2563eb; color: #fff; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3); }
-    .tab-btn.inactive { background: #f1f5f9; color: #475569; }
-    .tab-btn.inactive:hover { background: #e2e8f0; }
-
-    /* Legend */
-    .legend-area { display: flex; align-items: center; gap: 16px; font-size: 12px; font-weight: 600; color: #475569; }
-    .legend-item { display: flex; align-items: center; gap: 6px; }
-    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-    .dot-emerald { background: #10b981; }
-    .dot-rose { background: #f43f5e; }
-
-    /* Kotak Rumah Grid */
-    .house-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 18px; }
-    @media (min-width: 480px) { .house-grid { grid-template-columns: repeat(5, 1fr); } }
-    @media (min-width: 640px) { .house-grid { grid-template-columns: repeat(8, 1fr); } }
-    @media (min-width: 900px) { .house-grid { grid-template-columns: repeat(10, 1fr); } }
-
-    /* Kotak Rumah Item */
-    .house-card { 
-      border-radius: 10px; 
-      padding: 10px 4px; 
-      color: #ffffff; 
-      text-align: center; 
-      cursor: pointer; 
-      user-select: none; 
-      display: flex; 
-      flex-direction: column; 
-      justify-content: space-between; 
-      align-items: center; 
-      min-height: 75px; 
-      box-shadow: 0 2px 4px rgba(0,0,0,0.08); 
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-    .house-card:active { transform: scale(0.92); }
-    .house-card.lunas { background: linear-gradient(135deg, #10b981, #059669); border: 1px solid #047857; }
-    .house-card.belum { background: linear-gradient(135deg, #f43f5e, #e11d48); border: 1px solid #be123c; }
-
-    .house-block { font-size: 10px; font-weight: 700; opacity: 0.9; text-transform: uppercase; }
-    .house-number { font-size: 16px; font-weight: 800; margin: 2px 0; }
-    .house-date { font-size: 10px; font-weight: 600; opacity: 0.95; }
-
-    /* Modal Pop-up */
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
-    .modal-card { background: #fff; width: 100%; max-width: 360px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .modal-header h3 { font-size: 16px; font-weight: 700; color: #0f172a; }
-    .close-btn { background: none; border: none; font-size: 22px; color: #94a3b8; cursor: pointer; font-weight: bold; }
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 12px; font-weight: 600; color: #475569; margin-bottom: 6px; }
-    .form-group input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; }
-    .btn-stack { display: flex; flex-direction: column; gap: 8px; }
-    .btn { width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; text-align: center; }
-    .btn-emerald { background: #10b981; color: #fff; }
-    .btn-rose-light { background: #ffe4e6; color: #be123c; }
-    .btn-slate-light { background: #f1f5f9; color: #475569; }
-  </style>
+        .footer { margin-top: 30px; display: flex; gap: 10px; }
+        .footer button { flex: 1; background: #1d1d1f; color: #fff; }
+    </style>
 </head>
 <body>
 
-  <!-- Header -->
-  <header>
-    <div class="header-container">
-      <div class="title-area">
-        <div class="icon-box">🏠</div>
-        <div>
-          <h1>Iuran Perumahan</h1>
-          <p>Monitoring & Pencatatan Kas Bulanan</p>
+<div class="header">
+    <h1>Pencatatan Iuran Perumahan</h1>
+    <div class="top-bar">
+        <label>Periode Bulan:
+            <select id="monthSelect"></select>
+        </label>
+        <div class="legend">
+            <span><span class="dot paid"></span> Sudah Bayar</span>
+            <span><span class="dot unpaid"></span> Belum Bayar</span>
         </div>
-      </div>
-      <div class="period-box">
-        <label for="monthPicker">Periode:</label>
-        <input type="month" id="monthPicker">
-      </div>
     </div>
-  </header>
+</div>
 
-  <!-- Main Container -->
-  <main>
-    <!-- Stat Ringkasan -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Total Rumah</div>
-        <div class="stat-value" style="color: #1e293b;" id="statTotal">50</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label" style="color: #059669;">Sudah Bayar</div>
-        <div class="stat-value" style="color: #059669;" id="statPaid">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label" style="color: #e11d48;">Belum Bayar</div>
-        <div class="stat-value" style="color: #e11d48;" id="statUnpaid">50</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label" style="color: #2563eb;">Capaian</div>
-        <div class="stat-value" style="color: #2563eb;" id="statPercent">0%</div>
-      </div>
-    </div>
+<div class="grid" id="gridContainer"></div>
 
-    <!-- Main Content Card -->
-    <div class="content-card">
-      <div class="card-top">
-        <div class="tabs-area" id="tabContainer"></div>
-        <div class="legend-area">
-          <div class="legend-item"><span class="dot dot-emerald"></span> Lunas</div>
-          <div class="legend-item"><span class="dot dot-rose"></span> Belum Bayar</div>
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Pilih Tanggal Bayar</h3>
+        <input type="date" id="dateInput">
+        <div class="btn-group">
+            <button class="btn-cancel" id="btnCancel">Batal</button>
+            <button class="btn-save" id="btnSave">Simpan</button>
         </div>
-      </div>
-
-      <!-- Area 50 Kotak Rumah -->
-      <div class="house-grid" id="gridContainer"></div>
+        <button class="btn-delete" id="btnDelete">Hapus Status Bayar</button>
     </div>
-  </main>
+</div>
 
-  <!-- Pop-up Pilih Tanggal -->
-  <div id="paymentModal" class="modal-overlay">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 id="modalTitle">Rumah A01</h3>
-        <button class="close-btn" onclick="closeModal()">&times;</button>
-      </div>
+<div class="footer">
+    <button id="closeSys">Menutup Sistem Iuran Perumahan</button>
+    <button id="resetAll">Urungkan / Reset Bulan Ini</button>
+</div>
 
-      <div class="form-group">
-        <label for="payDate">Pilih Tanggal Bayar:</label>
-        <input type="date" id="payDate">
-      </div>
+<script>
+// Inisialisasi
+const monthSelect = document.getElementById('monthSelect');
+const gridContainer = document.getElementById('gridContainer');
+const modal = document.getElementById('modal');
+const dateInput = document.getElementById('dateInput');
+const btnCancel = document.getElementById('btnCancel');
+const btnSave = document.getElementById('btnSave');
+const btnDelete = document.getElementById('btnDelete');
+const btnCloseSys = document.getElementById('closeSys');
+const btnResetAll = document.getElementById('resetAll');
+const modalTitle = document.getElementById('modalTitle');
 
-      <div class="btn-stack">
-        <button onclick="savePayment()" class="btn btn-emerald">Simpan & Set Lunas (Hijau)</button>
-        <button id="btnReset" onclick="resetPayment()" class="btn btn-rose-light">Batal Lunas (Set Merah)</button>
-        <button onclick="closeModal()" class="btn btn-slate-light">Tutup</button>
-      </div>
-    </div>
-  </div>
+let currentIndex = null;
+let payments = {};
 
-  <script>
-    // === CONFIG SUPABASE (Aman jika belum diisi) ===
-    const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT_ID.supabase.co';
-    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-    
-    let supabase = null;
-    if (typeof window.supabase !== 'undefined' && !SUPABASE_URL.includes('YOUR_SUPABASE')) {
-      try {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      } catch (e) {
-        console.warn('Supabase belum terkonfigurasi, berjalan dalam mode lokal.');
-      }
-    }
+// Load data dari localStorage
+function loadData() {
+    const saved = localStorage.getItem('iuranData');
+    if (saved) payments = JSON.parse(saved);
+}
+function saveData() {
+    localStorage.setItem('iuranData', JSON.stringify(payments));
+}
 
-    // === MEMBUAT 50 RUMAH PER BLOK (Nomor 01 - 50) ===
-    const generateHouses = (prefix, count) => {
-      return Array.from({ length: count }, (_, i) => {
-        const num = String(i + 1).padStart(2, '0');
-        return `${prefix}${num}`;
-      });
-    };
-
-    const HOUSING_DATA = {
-      'Blok A': generateHouses('A', 50),
-      'Blok B': generateHouses('B', 50),
-      'Blok C': generateHouses('C', 50)
-    };
-
-    let activeBlock = 'Blok A';
-    let paymentRecords = {};
-    let selectedHouseNum = null;
-
-    const monthPicker = document.getElementById('monthPicker');
-    const today = new Date();
-    monthPicker.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-
-    // Fungsi Utama Inisialisasi Aplikasi
-    function initApp() {
-      initTabs();
-      fetchAndRenderData();
-      monthPicker.addEventListener('change', fetchAndRenderData);
-    }
-
-    function initTabs() {
-      const tabContainer = document.getElementById('tabContainer');
-      tabContainer.innerHTML = '';
-      
-      Object.keys(HOUSING_DATA).forEach(block => {
-        const btn = document.createElement('button');
-        const isActive = block === activeBlock;
-        btn.className = `tab-btn ${isActive ? 'active' : 'inactive'}`;
-        btn.innerText = `${block} (50 Rumah)`;
-        btn.onclick = () => {
-          activeBlock = block;
-          initTabs();
-          renderGrid();
-        };
-        tabContainer.appendChild(btn);
-      });
-    }
-
-    async function fetchAndRenderData() {
-      const currentPeriod = monthPicker.value;
-
-      if (supabase && currentPeriod) {
-        try {
-          const { data, error } = await supabase
-            .from('iuran_rumah')
-            .select('*')
-            .eq('bulan_tahun', currentPeriod);
-
-          if (!error && data) {
-            paymentRecords = {};
-            data.forEach(row => {
-              if (row.status_bayar) {
-                paymentRecords[`${row.blok}_${row.nomor_rumah}`] = {
-                  status: true,
-                  date: row.tanggal_bayar
-                };
-              }
-            });
-          }
-        } catch (err) {
-          console.error('Gagal mengambil data Supabase:', err);
+// Isi pilihan bulan
+function initMonthOptions() {
+    const months = [];
+    const now = new Date();
+    for (let y = now.getFullYear() - 1; y <= now.getFullYear() + 1; y++) {
+        for (let m = 1; m <= 12; m++) {
+            months.push(`${y}-${String(m).padStart(2,'0')}`);
         }
-      }
-
-      renderGrid();
     }
+    monthSelect.innerHTML = months.map(m => {
+        const [y, mm] = m.split('-');
+        const namaBulan = new Date(y, mm-1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        return `<option value="${m}">${namaBulan}</option>`;
+    }).join('');
+    const current = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    monthSelect.value = current;
+}
 
-    function renderGrid() {
-      const gridContainer = document.getElementById('gridContainer');
-      gridContainer.innerHTML = '';
-
-      const houses = HOUSING_DATA[activeBlock] || [];
-      let totalPaidCount = 0;
-
-      houses.forEach(houseNum => {
-        const key = `${activeBlock}_${houseNum}`;
-        const record = paymentRecords[key];
-        const isPaid = record && record.status;
-
-        if (isPaid) totalPaidCount++;
-
-        const card = document.createElement('div');
-        card.className = `house-card ${isPaid ? 'lunas' : 'belum'}`;
-        card.onclick = () => openModal(houseNum, isPaid, record ? record.date : null);
-
-        card.innerHTML = `
-          <div class="house-block">${activeBlock}</div>
-          <div class="house-number">${houseNum}</div>
-          <div class="house-date">${isPaid ? (record.date ? formatDate(record.date) : 'Lunas') : 'Belum'}</div>
+// Render 50 kotak
+function renderGrid() {
+    gridContainer.innerHTML = '';
+    const period = monthSelect.value;
+    for (let i = 1; i <= 50; i++) {
+        const key = `${period}-${i}`;
+        const info = payments[key];
+        const box = document.createElement('div');
+        box.className = `box ${info ? 'paid' : 'unpaid'}`;
+        box.innerHTML = `
+            <div class="num">${i}</div>
+            <div class="date">${info ? info.date : 'Belum'}</div>
         `;
-
-        gridContainer.appendChild(card);
-      });
-
-      // Update Statistik Angka
-      const total = houses.length;
-      document.getElementById('statTotal').innerText = total;
-      document.getElementById('statPaid').innerText = totalPaidCount;
-      document.getElementById('statUnpaid').innerText = total - totalPaidCount;
-      document.getElementById('statPercent').innerText = `${Math.round((totalPaidCount / total) * 100)}%`;
+        box.addEventListener('click', () => openModal(i, period));
+        gridContainer.appendChild(box);
     }
+}
 
-    function openModal(houseNum, isPaid, currentDate) {
-      selectedHouseNum = houseNum;
-      document.getElementById('modalTitle').innerText = `Rumah ${houseNum} (${activeBlock})`;
-      
-      const payDateInput = document.getElementById('payDate');
-      payDateInput.value = currentDate || new Date().toISOString().split('T')[0];
+function openModal(num, period) {
+    currentIndex = { num, period };
+    const key = `${period}-${num}`;
+    modalTitle.textContent = `Nomor ${num} - Pilih Tanggal Bayar`;
+    dateInput.value = payments[key]?.date || '';
+    modal.classList.add('show');
+}
 
-      document.getElementById('btnReset').style.display = isPaid ? 'block' : 'none';
-      document.getElementById('paymentModal').style.display = 'flex';
-    }
+btnCancel.addEventListener('click', () => modal.classList.remove('show'));
 
-    function closeModal() {
-      document.getElementById('paymentModal').style.display = 'none';
-      selectedHouseNum = null;
-    }
-
-    async function savePayment() {
-      const payDate = document.getElementById('payDate').value;
-      const currentPeriod = monthPicker.value;
-      const key = `${activeBlock}_${selectedHouseNum}`;
-
-      if (!payDate) {
-        alert('Pilih tanggal pembayaran terlebih dahulu!');
+btnSave.addEventListener('click', () => {
+    if (!dateInput.value) {
+        alert('Silakan pilih tanggal!');
         return;
-      }
-
-      // Simpan di memori lokal
-      paymentRecords[key] = { status: true, date: payDate };
-
-      // Simpan ke Supabase jika terhubung
-      if (supabase) {
-        try {
-          await supabase
-            .from('iuran_rumah')
-            .upsert({
-              blok: activeBlock,
-              nomor_rumah: selectedHouseNum,
-              bulan_tahun: currentPeriod,
-              status_bayar: true,
-              tanggal_bayar: payDate
-            }, { onConflict: 'blok,nomor_rumah,bulan_tahun' });
-        } catch (err) {
-          console.error('Error saat menyimpan ke Supabase:', err);
-        }
-      }
-
-      closeModal();
-      renderGrid();
     }
+    const key = `${currentIndex.period}-${currentIndex.num}`;
+    payments[key] = { date: dateInput.value };
+    saveData();
+    renderGrid();
+    modal.classList.remove('show');
+});
 
-    async function resetPayment() {
-      const currentPeriod = monthPicker.value;
-      const key = `${activeBlock}_${selectedHouseNum}`;
+btnDelete.addEventListener('click', () => {
+    if (!confirm('Yakin hapus status pembayaran ini?')) return;
+    const key = `${currentIndex.period}-${currentIndex.num}`;
+    delete payments[key];
+    saveData();
+    renderGrid();
+    modal.classList.remove('show');
+});
 
-      delete paymentRecords[key];
+monthSelect.addEventListener('change', renderGrid);
 
-      if (supabase) {
-        try {
-          await supabase
-            .from('iuran_rumah')
-            .upsert({
-              blok: activeBlock,
-              nomor_rumah: selectedHouseNum,
-              bulan_tahun: currentPeriod,
-              status_bayar: false,
-              tanggal_bayar: null
-            }, { onConflict: 'blok,nomor_rumah,bulan_tahun' });
-        } catch (err) {
-          console.error('Error saat mereset di Supabase:', err);
-        }
-      }
-
-      closeModal();
-      renderGrid();
+btnCloseSys.addEventListener('click', () => {
+    if (confirm('Tutup sistem? Data tersimpan otomatis.')) {
+        window.close();
     }
+});
 
-    function formatDate(strDate) {
-      if (!strDate) return '';
-      const parts = strDate.split('-');
-      return `${parts[2]}/${parts[1]}`;
+btnResetAll.addEventListener('click', () => {
+    if (!confirm('Yakin reset SEMUA data bulan ini?')) return;
+    const period = monthSelect.value;
+    for (let i = 1; i <= 50; i++) {
+        delete payments[`${period}-${i}`];
     }
+    saveData();
+    renderGrid();
+});
 
-    // Jalankan aplikasi setelah DOM siap
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initApp);
-    } else {
-      initApp();
-    }
-  </script>
+// Jalankan
+loadData();
+initMonthOptions();
+renderGrid();
+</script>
+
 </body>
 </html>
