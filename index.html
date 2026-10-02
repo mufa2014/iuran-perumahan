@@ -28,31 +28,49 @@
         .dot.paid { background: var(--hijau); box-shadow: 0 0 0 2px rgba(52,199,89,0.2); }
         .dot.unpaid { background: var(--merah); box-shadow: 0 0 0 2px rgba(255,59,48,0.2); }
 
-        .tabs { display: flex; gap: 10px; margin-bottom: 8px; flex-wrap: wrap; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
         .tab {
-            padding: 12px 24px; border-radius: 12px 12px 0 0; background: var(--abu); border: none;
-            cursor: pointer; font-weight: 600; font-size: 15px; transition: all 0.2s ease;
+            padding: 12px 20px; border-radius: 12px 12px 0 0; background: var(--abu); border: none;
+            cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s ease;
         }
         .tab:hover { background: #d1d1d6; }
         .tab.active { background: var(--putih); box-shadow: 0 -3px 0 var(--biru); color: var(--biru); }
 
-        /* ✅ GRID 5 KOLOM × 10 BARIS — KOTAK LEBIH BESAR */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Grid 5×10 */
         .grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr); /* 5 kolom tetap */
-            gap: 12px; /* Jarak antar kotak lebih renggang */
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
         }
         .box {
-            background: var(--putih); border-radius: 12px; padding: 18px 10px; /* Lebih tinggi */
+            background: var(--putih); border-radius: 12px; padding: 18px 10px;
             text-align: center; cursor: pointer; border: 2px solid transparent;
             transition: all 0.25s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            min-height: 80px; /* Ukuran minimal kotak diperbesar */
+            min-height: 80px;
         }
         .box:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
         .box.unpaid { background: #fff2f2; border-color: var(--merah); }
         .box.paid { background: #f2fff4; border-color: var(--hijau); }
-        .box .id { font-size: 20px; font-weight: 700; margin-bottom: 6px; } /* Tulisan lebih besar */
-        .box .date { font-size: 13px; color: #636366; } /* Tanggal lebih jelas */
+        .box .id { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+        .box .date { font-size: 13px; color: #636366; }
+
+        /* Rekap */
+        .rekap-card {
+            background: var(--putih); border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        }
+        .rekap-card h2 { font-size: 18px; margin-bottom: 20px; color: var(--gelap); }
+        .rekap-baris {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 0; border-bottom: 1px solid #eee; font-size: 15px;
+        }
+        .rekap-baris:last-child { border-bottom: none; }
+        .rekap-baris.total { font-weight: 700; font-size: 17px; border-top: 2px solid var(--biru); border-bottom: none; padding-top: 16px; margin-top: 8px; }
+        .uang { font-weight: 600; color: var(--biru); }
+        .uang.besar { font-size: 19px; color: #0066cc; }
+        .ket { font-size: 13px; color: #8e8e93; margin-top: 4px; }
 
         .modal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none;
@@ -86,7 +104,6 @@
         .stat-item { font-size: 14px; }
         .stat-item b { color: var(--biru); }
 
-        /* Di HP tetap 5 kolom, sedikit disesuaikan */
         @media (max-width: 480px) {
             .grid { gap: 8px; }
             .box { padding: 14px 6px; min-height: 70px; }
@@ -110,19 +127,40 @@
     </div>
 
     <div class="tabs" id="tabs">
-        <button class="tab active" data-blok="A">Blok A</button>
-        <button class="tab" data-blok="B">Blok B</button>
-        <button class="tab" data-blok="C">Blok C</button>
-        <button class="tab" data-blok="D">Blok D</button>
+        <button class="tab active" data-tab="blok" data-blok="A">Blok A</button>
+        <button class="tab" data-tab="blok" data-blok="B">Blok B</button>
+        <button class="tab" data-tab="blok" data-blok="C">Blok C</button>
+        <button class="tab" data-tab="blok" data-blok="D">Blok D</button>
+        <button class="tab" data-tab="rekap">📊 Rekapitulasi</button>
     </div>
 
-    <div class="stat-bar">
-        <div class="stat-item">Sudah bayar: <b id="jmlSudah">0</b> / 50</div>
-        <div class="stat-item">Belum bayar: <b id="jmlBelum">0</b> / 50</div>
+    <div class="tab-content active" id="kontenBlok">
+        <div class="stat-bar">
+            <div class="stat-item">Sudah bayar: <b id="jmlSudah">0</b> / 50</div>
+            <div class="stat-item">Belum bayar: <b id="jmlBelum">0</b> / 50</div>
+        </div>
     </div>
 </div>
 
-<div class="grid" id="gridContainer"></div>
+<!-- Konten Blok -->
+<div class="tab-content active" id="kontenGrid">
+    <div class="grid" id="gridContainer"></div>
+</div>
+
+<!-- Konten Rekap -->
+<div class="tab-content" id="kontenRekap">
+    <div class="rekap-card">
+        <h2>📊 Rekapitulasi Iuran — <span id="namaBulan"></span></h2>
+        <p class="ket">Iuran per rumah: <strong>Rp 10.000</strong></p>
+        
+        <div id="rekapPerBlok"></div>
+
+        <div class="rekap-baris total">
+            <span>💰 TOTAL SELURUH BLOK</span>
+            <span class="uang besar" id="totalSemuaBlok">Rp 0</span>
+        </div>
+    </div>
+</div>
 
 <!-- Modal Pilih Tanggal -->
 <div class="modal" id="modalBayar">
@@ -137,7 +175,7 @@
     </div>
 </div>
 
-<!-- Modal Masukkan Kata Sandi -->
+<!-- Modal Kata Sandi -->
 <div class="modal" id="modalSandi">
     <div class="modal-content">
         <h3>🔐 Masukkan Kata Sandi</h3>
@@ -157,6 +195,7 @@
 
 <script>
 const KATA_SANDI = "12345";
+const IURAN_PER_RUMAH = 10000; // Default Rp 10.000
 
 const monthSelect = document.getElementById('monthSelect');
 const tabsContainer = document.getElementById('tabs');
@@ -176,11 +215,20 @@ const btnKonfirmasi = document.getElementById('btnKonfirmasi');
 const modalJudul = document.getElementById('modalJudul');
 const jmlSudahEl = document.getElementById('jmlSudah');
 const jmlBelumEl = document.getElementById('jmlBelum');
+const namaBulanEl = document.getElementById('namaBulan');
+const rekapPerBlokEl = document.getElementById('rekapPerBlok');
+const totalSemuaBlokEl = document.getElementById('totalSemuaBlok');
 
 let currentBlok = 'A';
+let currentTab = 'blok';
 let currentIndex = null;
 let tindakanLulus = null;
 let payments = {};
+
+// Format Rupiah
+function formatRupiah(angka) {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+}
 
 function muatData() {
     const simpanan = localStorage.getItem('dataIuran');
@@ -211,8 +259,24 @@ tabsContainer.addEventListener('click', e => {
     if (!e.target.classList.contains('tab')) return;
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     e.target.classList.add('active');
-    currentBlok = e.target.dataset.blok;
-    tampilkanGrid();
+
+    const tabJenis = e.target.dataset.tab;
+    currentTab = tabJenis;
+
+    // Sembunyikan semua konten
+    document.getElementById('kontenGrid').classList.remove('active');
+    document.getElementById('kontenRekap').classList.remove('active');
+    document.getElementById('kontenBlok').classList.remove('active');
+
+    if (tabJenis === 'blok') {
+        currentBlok = e.target.dataset.blok;
+        document.getElementById('kontenGrid').classList.add('active');
+        document.getElementById('kontenBlok').classList.add('active');
+        tampilkanGrid();
+    } else if (tabJenis === 'rekap') {
+        document.getElementById('kontenRekap').classList.add('active');
+        tampilkanRekap();
+    }
 });
 
 function tampilkanGrid() {
@@ -237,6 +301,34 @@ function tampilkanGrid() {
 
     jmlSudahEl.textContent = sudah;
     jmlBelumEl.textContent = belum;
+}
+
+function tampilkanRekap() {
+    const periode = monthSelect.value;
+    const [thn, bln] = periode.split('-');
+    namaBulanEl.textContent = new Date(thn, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+
+    const daftarBlok = ['A', 'B', 'C', 'D'];
+    let totalSemua = 0;
+    let html = '';
+
+    for (const blok of daftarBlok) {
+        let sudah = 0;
+        for (let no = 1; no <= 50; no++) {
+            if (payments[`${periode}-${blok}${no}`]) sudah++;
+        }
+        const jumlahUang = sudah * IURAN_PER_RUMAH;
+        totalSemua += jumlahUang;
+
+        html += `
+        <div class="rekap-baris">
+            <span>Blok ${blok} — ${sudah} rumah / 50</span>
+            <span class="uang">${formatRupiah(jumlahUang)}</span>
+        </div>`;
+    }
+
+    rekapPerBlokEl.innerHTML = html;
+    totalSemuaBlokEl.textContent = formatRupiah(totalSemua);
 }
 
 function bukaModalBayar(no, periode) {
@@ -270,7 +362,10 @@ btnHapus.addEventListener('click', () => {
     modalBayar.classList.remove('show');
 });
 
-monthSelect.addEventListener('change', tampilkanGrid);
+monthSelect.addEventListener('change', () => {
+    if (currentTab === 'rekap') tampilkanRekap();
+    else tampilkanGrid();
+});
 btnSelesai.addEventListener('click', () => location.reload());
 
 // Proteksi Kata Sandi
