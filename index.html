@@ -1,402 +1,321 @@
-```html
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistem Iuran Perumahan</title>
+  <title>Iuran Perumahan</title>
   <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: Inter -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Supabase JS Client -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
+  <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+  <!-- Google Fonts Inter -->
+  <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap)" rel="stylesheet">
+  <!-- Supabase JS -->
+  <script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
   <style>
-    body {
-      font-family: 'Inter', sans-serif;
-    }
-    /* Custom scrollbar untuk Tab */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
+    body { font-family: 'Inter', sans-serif; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen pb-12 antialiased">
+<body class="bg-slate-50 min-h-screen text-slate-800 pb-12">
 
-  <!-- Header / Navbar -->
+  <!-- Header / Navigation -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-      <div class="flex items-center gap-3 w-full sm:w-auto">
-        <div class="p-2.5 bg-blue-600 text-white rounded-xl shadow-md shadow-blue-500/20">
-          <i data-lucide="home" class="w-6 h-6"></i>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-blue-200">
+          🏠
         </div>
         <div>
-          <h1 class="text-xl font-bold text-slate-900 leading-tight">Iuran Perumahan</h1>
+          <h1 class="text-lg font-bold text-slate-900 leading-tight">Iuran Perumahan</h1>
           <p class="text-xs text-slate-500">Monitoring & Pencatatan Kas Bulanan</p>
         </div>
       </div>
-
-      <!-- Selector Periode Bulan -->
-      <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200 w-full sm:w-auto justify-between">
-        <span class="text-xs font-semibold text-slate-500 pl-2 flex items-center gap-1.5">
-          <i data-lucide="calendar" class="w-4 h-4"></i> Periode:
-        </span>
-        <input type="month" id="monthPicker" class="bg-white text-slate-800 text-sm font-semibold py-1.5 px-3 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition shadow-sm cursor-pointer">
+      <!-- Selector Bulan -->
+      <div class="flex items-center bg-slate-100 p-1.5 rounded-lg border border-slate-200">
+        <label for="monthPicker" class="text-xs font-semibold text-slate-500 px-2 hidden sm:block">Periode:</label>
+        <input type="month" id="monthPicker" class="bg-white text-slate-700 text-sm font-semibold px-2.5 py-1 rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500">
       </div>
     </div>
   </header>
 
   <!-- Main Container -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
 
-    <!-- Grid Ringkasan Statistik -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
-        <div class="p-3 bg-slate-100 text-slate-600 rounded-xl">
-          <i data-lucide="building" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <p class="text-xs text-slate-500 font-medium">Total Rumah</p>
-          <p id="statTotal" class="text-lg sm:text-xl font-bold text-slate-800">0</p>
-        </div>
+    <!-- Stat Ringkasan -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <p class="text-xs font-medium text-slate-500">Total Rumah</p>
+        <p class="text-2xl font-bold text-slate-800 mt-1" id="statTotal">50</p>
       </div>
-
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
-        <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-          <i data-lucide="check-circle-2" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <p class="text-xs text-slate-500 font-medium">Sudah Bayar</p>
-          <p id="statLunas" class="text-lg sm:text-xl font-bold text-emerald-600">0</p>
-        </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <p class="text-xs font-medium text-emerald-600">Sudah Bayar</p>
+        <p class="text-2xl font-bold text-emerald-600 mt-1" id="statPaid">0</p>
       </div>
-
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
-        <div class="p-3 bg-rose-50 text-rose-600 rounded-xl">
-          <i data-lucide="x-circle" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <p class="text-xs text-slate-500 font-medium">Belum Bayar</p>
-          <p id="statBelum" class="text-lg sm:text-xl font-bold text-rose-600">0</p>
-        </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <p class="text-xs font-medium text-rose-500">Belum Bayar</p>
+        <p class="text-2xl font-bold text-rose-500 mt-1" id="statUnpaid">50</p>
       </div>
-
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3 col-span-2 md:col-span-1">
-        <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
-          <i data-lucide="percent" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <p class="text-xs text-slate-500 font-medium">Capaian</p>
-          <p id="statPersen" class="text-lg sm:text-xl font-bold text-blue-600">0%</p>
-        </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <p class="text-xs font-medium text-blue-600">Capaian</p>
+        <p class="text-2xl font-bold text-blue-600 mt-1" id="statPercent">0%</p>
       </div>
     </div>
 
-    <!-- Section Utama Tab & Grid -->
-    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 sm:p-6">
-      
-      <!-- Top Control / Legend & Tabs -->
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
+    <!-- Tab Blok & Legenda -->
+    <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
         <!-- Tabs Blok -->
-        <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto no-scrollbar pb-1 md:pb-0" id="tabContainer">
-          <!-- Tab items inject via JS -->
-        </div>
-
-        <!-- Legend Status Warna -->
-        <div class="flex items-center gap-4 text-xs font-medium text-slate-600 bg-slate-50 px-3 py-2 rounded-xl border border-slate-100 self-end md:self-auto">
-          <div class="flex items-center gap-1.5">
-            <span class="w-3 h-3 rounded-full bg-emerald-500"></span> Lunas
+        <div class="flex space-x-2 overflow-x-auto pb-1 sm:pb-0" id="tabContainer"></div>
+        
+        <!-- Legend warna -->
+        <div class="flex items-center space-x-4 text-xs font-semibold">
+          <div class="flex items-center space-x-1.5">
+            <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
+            <span class="text-slate-600">Lunas</span>
           </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-3 h-3 rounded-full bg-rose-500"></span> Belum Bayar
+          <div class="flex items-center space-x-1.5">
+            <span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
+            <span class="text-slate-600">Belum Bayar</span>
           </div>
         </div>
       </div>
 
-      <!-- Grid Kotak-Kotak Rumah -->
-      <div id="gridContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-        <!-- Grid items inject via JS -->
+      <!-- Grid 50 Rumah -->
+      <div class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2.5 mt-5" id="gridContainer">
+        <!-- Kotak rumah di-render otomatis oleh Javascript -->
       </div>
     </div>
+
   </main>
 
-  <!-- Modal Konfirmasi / Edit Status Bayar -->
-  <div id="paymentModal" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all scale-100">
-      
-      <div class="flex justify-between items-center mb-4">
-        <div class="flex items-center gap-3">
-          <div id="modalIconBg" class="p-2.5 rounded-xl bg-blue-50 text-blue-600">
-            <i data-lucide="home" class="w-6 h-6"></i>
-          </div>
-          <div>
-            <h3 id="modalTitle" class="text-lg font-bold text-slate-900">Rumah A1</h3>
-            <p id="modalSubtitle" class="text-xs text-slate-500">Update Status Pembayaran</p>
-          </div>
-        </div>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100">
-          <i data-lucide="x" class="w-5 h-5"></i>
-        </button>
+  <!-- Modal Pilih Tanggal Bayar -->
+  <div id="paymentModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl transform transition-all">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-slate-800" id="modalTitle">Rumah A01</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
       </div>
 
-      <div class="space-y-4 my-5">
+      <div class="space-y-4">
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Pembayaran</label>
-          <div class="relative">
-            <input type="date" id="payDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition">
-          </div>
+          <label for="payDate" class="block text-xs font-semibold text-slate-600 mb-1">Tanggal Bayar:</label>
+          <input type="date" id="payDate" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div class="pt-2 flex flex-col gap-2">
+          <button onclick="savePayment()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-lg text-sm shadow-md transition">
+            Simpan (Set Lunas)
+          </button>
+          <button id="btnReset" onclick="resetPayment()" class="w-full bg-rose-100 hover:bg-rose-200 text-rose-700 font-semibold py-2 rounded-lg text-xs transition">
+            Batal Lunas (Set Belum Bayar)
+          </button>
+          <button onclick="closeModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-2 rounded-lg text-xs transition">
+            Tutup
+          </button>
         </div>
       </div>
-
-      <div class="flex items-center gap-2 pt-2">
-        <button id="btnReset" onclick="resetPayment()" class="w-full py-2.5 px-4 bg-rose-50 text-rose-600 hover:bg-rose-100 text-sm font-semibold rounded-xl transition flex items-center justify-center gap-1.5">
-          <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Batalkan Lunas
-        </button>
-        <button onclick="savePayment()" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl shadow-md shadow-blue-500/20 transition flex items-center justify-center gap-1.5">
-          <i data-lucide="check" class="w-4 h-4"></i> Simpan
-        </button>
-      </div>
-
     </div>
   </div>
 
-<script>
-  // === CONFIGURASI SUPABASE ===
-  const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT_ID.supabase.co';
-  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <script>
+    // === CONFIG SUPABASE ===
+    const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT_ID.supabase.co';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const supabase = (SUPABASE_URL.includes('YOUR_SUPABASE')) ? null : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // === DATA MASTER BLOK & RUMAH ===
-  const HOUSING_DATA = {
-    'Blok A': Array.from({ length: 16 }, (_, i) => `A${i + 1}`),
-    'Blok B': Array.from({ length: 12 }, (_, i) => `B${i + 1}`),
-    'Blok C': Array.from({ length: 10 }, (_, i) => `C${i + 1}`),
-    'Blok D': Array.from({ length: 8 }, (_, i) => `D${i + 1}`)
-  };
-
-  let activeBlock = Object.keys(HOUSING_DATA)[0];
-  let paymentRecords = {}; 
-  let selectedHouseNum = null;
-
-  // Inisialisasi Bulan Sekarang (YYYY-MM)
-  const monthPicker = document.getElementById('monthPicker');
-  const now = new Date();
-  monthPicker.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-  document.addEventListener('DOMContentLoaded', () => {
-    lucide.createIcons();
-    initTabs();
-    fetchAndRenderData();
-
-    monthPicker.addEventListener('change', fetchAndRenderData);
-  });
-
-  function initTabs() {
-    const tabContainer = document.getElementById('tabContainer');
-    tabContainer.innerHTML = '';
-    
-    Object.keys(HOUSING_DATA).forEach(block => {
-      const btn = document.createElement('button');
-      const isActive = block === activeBlock;
-      btn.className = `px-4 py-2 rounded-xl text-sm font-semibold transition whitespace-nowrap ${
-        isActive 
-          ? 'bg-slate-900 text-white shadow-sm' 
-          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-      }`;
-      btn.innerText = block;
-      btn.onclick = () => {
-        activeBlock = block;
-        initTabs();
-        renderGrid();
-      };
-      tabContainer.appendChild(btn);
-    });
-  }
-
-  async function fetchAndRenderData() {
-    const currentPeriod = monthPicker.value;
-    if (!currentPeriod) return;
-
-    // Ambil data dari Supabase
-    const { data, error } = await supabase
-      .from('iuran_rumah')
-      .select('*')
-      .eq('bulan_tahun', currentPeriod);
-
-    if (error) {
-      console.error('Gagal mengambil data:', error.message);
-    }
-
-    paymentRecords = {};
-    if (data) {
-      data.forEach(row => {
-        if (row.status_bayar) {
-          paymentRecords[`${row.blok}_${row.nomor_rumah}`] = {
-            status: true,
-            date: row.tanggal_bayar
-          };
-        }
+    // === GENERATE 50 RUMAH PER BLOK ===
+    const generateHouses = (prefix, count) => {
+      return Array.from({ length: count }, (_, i) => {
+        const num = String(i + 1).padStart(2, '0');
+        return `${prefix}${num}`;
       });
-    }
+    };
 
-    updateStats();
-    renderGrid();
-  }
+    const HOUSING_DATA = {
+      'Blok A': generateHouses('A', 50),
+      'Blok B': generateHouses('B', 50),
+      'Blok C': generateHouses('C', 50)
+    };
 
-  function updateStats() {
-    let totalAllHouses = 0;
-    Object.values(HOUSING_DATA).forEach(list => totalAllHouses += list.length);
+    let activeBlock = 'Blok A';
+    let paymentRecords = {};
+    let selectedHouseNum = null;
 
-    let lunasCount = 0;
-    Object.keys(HOUSING_DATA).forEach(block => {
-      HOUSING_DATA[block].forEach(num => {
-        if (paymentRecords[`${block}_${num}`]?.status) {
-          lunasCount++;
-        }
-      });
+    const monthPicker = document.getElementById('monthPicker');
+    const today = new Date();
+    monthPicker.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initTabs();
+      fetchAndRenderData();
+      monthPicker.addEventListener('change', fetchAndRenderData);
     });
 
-    const belumCount = totalAllHouses - lunasCount;
-    const percentage = totalAllHouses > 0 ? Math.round((lunasCount / totalAllHouses) * 100) : 0;
-
-    document.getElementById('statTotal').innerText = totalAllHouses;
-    document.getElementById('statLunas').innerText = lunasCount;
-    document.getElementById('statBelum').innerText = belumCount;
-    document.getElementById('statPersen').innerText = `${percentage}%`;
-  }
-
-  function renderGrid() {
-    const gridContainer = document.getElementById('gridContainer');
-    gridContainer.innerHTML = '';
-
-    const houses = HOUSING_DATA[activeBlock] || [];
-
-    houses.forEach(houseNum => {
-      const key = `${activeBlock}_${houseNum}`;
-      const record = paymentRecords[key];
-      const isPaid = record && record.status;
-
-      const card = document.createElement('div');
-      card.className = `relative p-4 rounded-2xl border transition duration-200 cursor-pointer flex flex-col justify-between h-28 select-none ${
-        isPaid 
-          ? 'bg-emerald-500/10 border-emerald-500/30 hover:border-emerald-500 text-emerald-950' 
-          : 'bg-rose-500/10 border-rose-500/30 hover:border-rose-500 text-rose-950'
-      }`;
+    function initTabs() {
+      const tabContainer = document.getElementById('tabContainer');
+      tabContainer.innerHTML = '';
       
-      card.onclick = () => openModal(houseNum, isPaid, record ? record.date : null);
+      Object.keys(HOUSING_DATA).forEach(block => {
+        const btn = document.createElement('button');
+        const isActive = block === activeBlock;
+        btn.className = `px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+          isActive 
+            ? 'bg-blue-600 text-white shadow-md shadow-blue-200' 
+            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+        }`;
+        btn.innerText = `${block} (50)`;
+        btn.onclick = () => {
+          activeBlock = block;
+          initTabs();
+          renderGrid();
+        };
+        tabContainer.appendChild(btn);
+      });
+    }
 
-      card.innerHTML = `
-        <div class="flex justify-between items-start">
-          <span class="text-base font-extrabold tracking-wide">${houseNum}</span>
-          <span class="p-1 rounded-full ${isPaid ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}">
-            <i data-lucide="${isPaid ? 'check' : 'clock'}" class="w-3.5 h-3.5"></i>
+    async function fetchAndRenderData() {
+      const currentPeriod = monthPicker.value;
+      if (!currentPeriod) return;
+
+      if (supabase) {
+        const { data, error } = await supabase
+          .from('iuran_rumah')
+          .select('*')
+          .eq('bulan_tahun', currentPeriod);
+
+        if (!error && data) {
+          paymentRecords = {};
+          data.forEach(row => {
+            if (row.status_bayar) {
+              paymentRecords[`${row.blok}_${row.nomor_rumah}`] = {
+                status: true,
+                date: row.tanggal_bayar
+              };
+            }
+          });
+        }
+      }
+
+      renderGrid();
+    }
+
+    function renderGrid() {
+      const gridContainer = document.getElementById('gridContainer');
+      gridContainer.innerHTML = '';
+
+      const houses = HOUSING_DATA[activeBlock] || [];
+      let totalPaidCount = 0;
+
+      houses.forEach(houseNum => {
+        const key = `${activeBlock}_${houseNum}`;
+        const record = paymentRecords[key];
+        const isPaid = record && record.status;
+
+        if (isPaid) totalPaidCount++;
+
+        const card = document.createElement('div');
+        card.className = `p-2.5 rounded-xl text-center cursor-pointer transition transform active:scale-95 shadow-sm border flex flex-col justify-between items-center h-20 ${
+          isPaid 
+            ? 'bg-emerald-500 text-white border-emerald-600 hover:bg-emerald-600' 
+            : 'bg-rose-500 text-white border-rose-600 hover:bg-rose-600'
+        }`;
+        
+        card.onclick = () => openModal(houseNum, isPaid, record ? record.date : null);
+
+        card.innerHTML = `
+          <span class="text-xs font-bold uppercase tracking-wider opacity-90">${activeBlock}</span>
+          <span class="text-lg font-extrabold my-auto">${houseNum}</span>
+          <span class="text-[10px] font-medium opacity-90">
+            ${isPaid ? (record.date ? formatDate(record.date) : 'Lunas') : 'Belum'}
           </span>
-        </div>
-        <div>
-          <p class="text-[11px] font-semibold uppercase tracking-wider opacity-75">
-            ${isPaid ? 'Lunas' : 'Belum Bayar'}
-          </p>
-          <p class="text-xs font-medium mt-0.5 opacity-90">
-            ${isPaid && record.date ? formatDate(record.date) : '-'}
-          </p>
-        </div>
-      `;
+        `;
 
-      gridContainer.appendChild(card);
-    });
+        gridContainer.appendChild(card);
+      });
 
-    lucide.createIcons();
-  }
-
-  function openModal(houseNum, isPaid, currentDate) {
-    selectedHouseNum = houseNum;
-    document.getElementById('modalTitle').innerText = `${activeBlock} - Rumah ${houseNum}`;
-    
-    const payDateInput = document.getElementById('payDate');
-    payDateInput.value = currentDate || new Date().toISOString().split('T')[0];
-
-    const btnReset = document.getElementById('btnReset');
-    btnReset.style.display = isPaid ? 'flex' : 'none';
-
-    const modalIconBg = document.getElementById('modalIconBg');
-    if(isPaid) {
-      modalIconBg.className = 'p-2.5 rounded-xl bg-emerald-50 text-emerald-600';
-    } else {
-      modalIconBg.className = 'p-2.5 rounded-xl bg-blue-50 text-blue-600';
+      // Update Statistik
+      const total = houses.length;
+      document.getElementById('statTotal').innerText = total;
+      document.getElementById('statPaid').innerText = totalPaidCount;
+      document.getElementById('statUnpaid').innerText = total - totalPaidCount;
+      document.getElementById('statPercent').innerText = `${Math.round((totalPaidCount / total) * 100)}%`;
     }
 
-    document.getElementById('paymentModal').classList.remove('hidden');
-  }
+    function openModal(houseNum, isPaid, currentDate) {
+      selectedHouseNum = houseNum;
+      document.getElementById('modalTitle').innerText = `Rumah ${houseNum} (${activeBlock})`;
+      
+      const payDateInput = document.getElementById('payDate');
+      payDateInput.value = currentDate || new Date().toISOString().split('T')[0];
 
-  function closeModal() {
-    document.getElementById('paymentModal').classList.add('hidden');
-    selectedHouseNum = null;
-  }
-
-  async function savePayment() {
-    const payDate = document.getElementById('payDate').value;
-    const currentPeriod = monthPicker.value;
-
-    if (!payDate) {
-      alert('Silakan pilih tanggal pembayaran.');
-      return;
+      document.getElementById('btnReset').style.display = isPaid ? 'block' : 'none';
+      const modal = document.getElementById('paymentModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
     }
 
-    const { error } = await supabase
-      .from('iuran_rumah')
-      .upsert({
-        blok: activeBlock,
-        nomor_rumah: selectedHouseNum,
-        bulan_tahun: currentPeriod,
-        status_bayar: true,
-        tanggal_bayar: payDate
-      }, { onConflict: 'blok,nomor_rumah,bulan_tahun' });
-
-    if (error) {
-      alert('Gagal menyimpan data: ' + error.message);
-      return;
+    function closeModal() {
+      const modal = document.getElementById('paymentModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      selectedHouseNum = null;
     }
 
-    closeModal();
-    fetchAndRenderData();
-  }
+    async function savePayment() {
+      const payDate = document.getElementById('payDate').value;
+      const currentPeriod = monthPicker.value;
+      const key = `${activeBlock}_${selectedHouseNum}`;
 
-  async function resetPayment() {
-    const currentPeriod = monthPicker.value;
+      if (!payDate) {
+        alert('Pilih tanggal pembayaran!');
+        return;
+      }
 
-    const { error } = await supabase
-      .from('iuran_rumah')
-      .upsert({
-        blok: activeBlock,
-        nomor_rumah: selectedHouseNum,
-        bulan_tahun: currentPeriod,
-        status_bayar: false,
-        tanggal_bayar: null
-      }, { onConflict: 'blok,nomor_rumah,bulan_tahun' });
+      // Update Local State
+      paymentRecords[key] = { status: true, date: payDate };
 
-    if (error) {
-      alert('Gagal mengubah status: ' + error.message);
-      return;
+      // Update Database jika Supabase dikonfigurasi
+      if (supabase) {
+        await supabase
+          .from('iuran_rumah')
+          .upsert({
+            blok: activeBlock,
+            nomor_rumah: selectedHouseNum,
+            bulan_tahun: currentPeriod,
+            status_bayar: true,
+            tanggal_bayar: payDate
+          }, { onConflict: 'blok,nomor_rumah,bulan_tahun' });
+      }
+
+      closeModal();
+      renderGrid();
     }
 
-    closeModal();
-    fetchAndRenderData();
-  }
+    async function resetPayment() {
+      const currentPeriod = monthPicker.value;
+      const key = `${activeBlock}_${selectedHouseNum}`;
 
-  function formatDate(strDate) {
-    if (!strDate) return '';
-    const [year, month, day] = strDate.split('-');
-    return `${day}/${month}/${year}`;
-  }
-</script>
+      delete paymentRecords[key];
 
+      if (supabase) {
+        await supabase
+          .from('iuran_rumah')
+          .upsert({
+            blok: activeBlock,
+            nomor_rumah: selectedHouseNum,
+            bulan_tahun: currentPeriod,
+            status_bayar: false,
+            tanggal_bayar: null
+          }, { onConflict: 'blok,nomor_rumah,bulan_tahun' });
+      }
+
+      closeModal();
+      renderGrid();
+    }
+
+    function formatDate(strDate) {
+      if (!strDate) return '';
+      const parts = strDate.split('-');
+      return `${parts[2]}/${parts[1]}`;
+    }
+  </script>
 </body>
 </html>
-```
