@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Iuran Perumahan</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f4f7f6; padding: 20px; color: #333; }
+    .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    
+    h1 { text-align: center; margin-bottom: 20px; color: #1e293b; font-size: 1.8rem; }
+    
+    .control-panel { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; background: #f8fafc; padding: 15px; border-radius: 8px; }
+    .period-selector { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+    input[type="month"] { padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; outline: none; }
+    
+    .legend { display: flex; gap: 15px; font-size: 0.9rem; font-weight: 500; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .color-box { width: 16px; height: 16px; border-radius: 4px; }
+    .bg-lunas { background-color: #22c55e; }
+    .bg-belum { background-color: #ef4444; }
+
+    /* Tabs Styling */
+    .tabs { display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 20px; gap: 5px; overflow-x: auto; }
+    .tab-btn { padding: 10px 20px; border: none; background: none; font-size: 1rem; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; }
+    .tab-btn:hover { color: #0f172a; }
+    .tab-btn.active { color: #2563eb; border-bottom-color: #2563eb; }
+
+    /* Grid Rumah */
+    .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; margin-top: 10px; }
+    .house-card { padding: 15px 10px; border-radius: 8px; color: white; text-align: center; cursor: pointer; font-weight: bold; transition: transform 0.15s, box-shadow 0.15s; user-select: none; }
+    .house-card:hover { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+    .house-card .num { font-size: 1.2rem; margin-bottom: 4px; }
+    .house-card .status-text { font-size: 0.75rem; font-weight: 400; opacity: 0.9; }
+    .house-card .pay-date { font-size: 0.7rem; font-weight: 300; opacity: 0.85; margin-top: 2px; }
+
+    /* Modal Styling */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
+    .modal-content { background: white; padding: 25px; border-radius: 10px; width: 100%; max-width: 380px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .modal-title { margin-bottom: 15px; font-size: 1.2rem; color: #0f172a; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #475569; }
+    .form-group input { width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-secondary { background: #94a3b8; color: white; }
+    .btn-danger { background: #ef4444; color: white; margin-right: auto; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Pencatatan Iuran Perumahan</h1>
+
+  <div class="control-panel">
+    <div class="period-selector">
+      <label for="monthPicker">Periode Bulan:</label>
+      <input type="month" id="monthPicker">
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="color-box bg-lunas"></div> Lunas</div>
+      <div class="legend-item"><div class="color-box bg-belum"></div> Belum Bayar</div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabContainer"></div>
+  <div class="grid-container" id="gridContainer"></div>
+</div>
+
+<!-- Modal Update Pembayaran -->
+<div class="modal" id="paymentModal">
+  <div class="modal-content">
+    <h3 class="modal-title" id="modalTitle">Konfirmasi Pembayaran</h3>
+    <div class="form-group">
+      <label for="payDate">Tanggal Pembayaran:</label>
+      <input type="date" id="payDate">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" id="btnReset" onclick="resetPayment()">Batal Lunas</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Batal</button>
+      <button class="btn btn-primary" onclick="savePayment()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // === CONFIG SUPABASE ===
+  const SUPABASE_URL = 'https://YOUR_SUPABASE_PROJECT_ID.supabase.co';
+  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // === DATA BLOK & NOMOR RUMAH ===
+  const HOUSING_DATA = {
+    'Blok A': Array.from({ length: 15 }, (_, i) => `A${i + 1}`),
+    'Blok B': Array.from({ length: 12 }, (_, i) => `B${i + 1}`),
+    'Blok C': Array.from({ length: 10 }, (_, i) => `C${i + 1}`)
+  };
+
+  let activeBlock = 'Blok A';
+  let paymentRecords = {}; // Format: { "A1": { status: true, date: "2026-10-01" } }
+  let selectedHouseNum = null;
+
+  // Set default bulan ke bulan saat ini
+  const monthPicker = document.getElementById('monthPicker');
+  const today = new Date();
+  monthPicker.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initTabs();
+    fetchAndRenderData();
+
+    monthPicker.addEventListener('change', fetchAndRenderData);
+  });
+
+  function initTabs() {
+    const tabContainer = document.getElementById('tabContainer');
+    tabContainer.innerHTML = '';
+    
+    Object.keys(HOUSING_DATA).forEach(block => {
+      const btn = document.createElement('button');
+      btn.className = `tab-btn ${block === activeBlock ? 'active' : ''}`;
+      btn.innerText = block;
+      btn.onclick = () => {
+        activeBlock = block;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderGrid();
+      };
+      tabContainer.appendChild(btn);
+    });
+  }
+
+  async function fetchAndRenderData() {
+    const currentPeriod = monthPicker.value;
+    if (!currentPeriod) return;
+
+    // Load data iuran dari Supabase berdasarkan periode
+    const { data, error } = await supabase
+      .from('iuran_rumah')
+      .select('*')
+      .eq('bulan_tahun', currentPeriod);
+
+    if (error) {
+      console.error('Gagal mengambil data:', error.message);
+      return;
+    }
+
+    // Mapping data ke object internal
+    paymentRecords = {};
+    if (data) {
+      data.forEach(row => {
+        if (row.status_bayar) {
+          paymentRecords[`${row.blok}_${row.nomor_rumah}`] = {
+            status: true,
+            date: row.tanggal_bayar
+          };
+        }
+      });
+    }
+
+    renderGrid();
+  }
+
+  function renderGrid() {
+    const gridContainer = document.getElementById('gridContainer');
+    gridContainer.innerHTML = '';
+
+    const houses = HOUSING_DATA[activeBlock] || [];
+
+    houses.forEach(houseNum => {
+      const key = `${activeBlock}_${houseNum}`;
+      const record = paymentRecords[key];
+      const isPaid = record && record.status;
+
+      const card = document.createElement('div');
+      card.className = `house-card ${isPaid ? 'bg-lunas' : 'bg-belum'}`;
+      card.onclick = () => openModal(houseNum, isPaid, record ? record.date : null);
+
+      card.innerHTML = `
+        <div class="num">${houseNum}</div>
+        <div class="status-text">${isPaid ? 'Lunas' : 'Belum Bayar'}</div>
+        ${isPaid && record.date ? `<div class="pay-date">${formatDate(record.date)}</div>` : ''}
+      `;
+
+      gridContainer.appendChild(card);
+    });
+  }
+
+  function openModal(houseNum, isPaid, currentDate) {
+    selectedHouseNum = houseNum;
+    document.getElementById('modalTitle').innerText = `Rumah ${houseNum} (${activeBlock})`;
+    
+    const payDateInput = document.getElementById('payDate');
+    payDateInput.value = currentDate || new Date().toISOString().split('T')[0];
+
+    document.getElementById('btnReset').style.display = isPaid ? 'block' : 'none';
+    document.getElementById('paymentModal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('paymentModal').style.display = 'none';
+    selectedHouseNum = null;
+  }
+
+  async function savePayment() {
+    const payDate = document.getElementById('payDate').value;
+    const currentPeriod = monthPicker.value;
+
+    if (!payDate) {
+      alert('Silakan pilih tanggal pembayaran.');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('iuran_rumah')
+      .upsert({
+        blok: activeBlock,
+        nomor_rumah: selectedHouseNum,
+        bulan_tahun: currentPeriod,
+        status_bayar: true,
+        tanggal_bayar: payDate
+      }, { onConflict: 'blok,nomor_rumah,bulan_tahun' });
+
+    if (error) {
+      alert('Gagal menyimpan data: ' + error.message);
+      return;
+    }
+
+    closeModal();
+    fetchAndRenderData();
+  }
+
+  async function resetPayment() {
+    const currentPeriod = monthPicker.value;
+
+    const { error } = await supabase
+      .from('iuran_rumah')
+      .upsert({
+        blok: activeBlock,
+        nomor_rumah: selectedHouseNum,
+        bulan_tahun: currentPeriod,
+        status_bayar: false,
+        tanggal_bayar: null
+      }, { onConflict: 'blok,nomor_rumah,bulan_tahun' });
+
+    if (error) {
+      alert('Gagal mengubah status: ' + error.message);
+      return;
+    }
+
+    closeModal();
+    fetchAndRenderData();
+  }
+
+  function formatDate(strDate) {
+    if (!strDate) return '';
+    const parts = strDate.split('-');
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+</script>
+
+</body>
+  </html>
+  
