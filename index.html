@@ -6,11 +6,11 @@
     <title>Pencatatan Iuran Perumahan</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
-        body { background: #f5f5f7; padding: 16px; max-width: 900px; margin: 0 auto; }
+        body { background: #f5f5f7; padding: 16px; max-width: 960px; margin: 0 auto; }
         
-        .header { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .header { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 16px; }
         h1 { font-size: 18px; color: #1d1d1f; margin-bottom: 12px; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
         select { padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px; }
         .legend { display: flex; gap: 16px; font-size: 13px; }
         .legend span { display: flex; align-items: center; gap: 6px; }
@@ -18,16 +18,24 @@
         .dot.paid { background: #34c759; }
         .dot.unpaid { background: #ff3b30; }
 
+        /* Tab Blok */
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .tab {
+            padding: 10px 20px; border-radius: 10px 10px 0 0; background: #e5e5e7; border: none;
+            cursor: pointer; font-weight: 500; font-size: 15px; transition: all 0.2s;
+        }
+        .tab.active { background: #fff; box-shadow: 0 -2px 4px rgba(0,0,0,0.06); color: #007aff; }
+
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px; }
         .box {
-            background: #fff; border-radius: 10px; padding: 14px 8px; text-align: center;
+            background: #fff; border-radius: 10px; padding: 12px 6px; text-align: center;
             cursor: pointer; border: 2px solid transparent; transition: all 0.25s;
             box-shadow: 0 2px 4px rgba(0,0,0,0.06);
         }
         .box:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .box.unpaid { background: #fff2f2; border-color: #ff3b30; }
         .box.paid { background: #f2fff4; border-color: #34c759; }
-        .box .num { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+        .box .id { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
         .box .date { font-size: 10px; color: #666; }
 
         .modal {
@@ -51,8 +59,8 @@
         .btn-save { background: #007aff; color: #fff; }
         .btn-delete { background: #ff3b30; color: #fff; margin-top: 8px; width: 100%; }
 
-        .footer { margin-top: 30px; display: flex; gap: 10px; }
-        .footer button { flex: 1; background: #1d1d1f; color: #fff; }
+        .footer { margin-top: 30px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .footer button { flex: 1; min-width: 180px; background: #1d1d1f; color: #fff; }
     </style>
 </head>
 <body>
@@ -67,6 +75,14 @@
             <span><span class="dot paid"></span> Sudah Bayar</span>
             <span><span class="dot unpaid"></span> Belum Bayar</span>
         </div>
+    </div>
+
+    <!-- Tab Blok A–D -->
+    <div class="tabs" id="tabs">
+        <button class="tab active" data-blok="A">Blok A</button>
+        <button class="tab" data-blok="B">Blok B</button>
+        <button class="tab" data-blok="C">Blok C</button>
+        <button class="tab" data-blok="D">Blok D</button>
     </div>
 </div>
 
@@ -86,12 +102,12 @@
 
 <div class="footer">
     <button id="closeSys">Menutup Sistem Iuran Perumahan</button>
-    <button id="resetAll">Urungkan / Reset Bulan Ini</button>
+    <button id="resetAll">Urungkan / Reset Blok Ini</button>
 </div>
 
 <script>
-// Inisialisasi
 const monthSelect = document.getElementById('monthSelect');
+const tabsContainer = document.getElementById('tabs');
 const gridContainer = document.getElementById('gridContainer');
 const modal = document.getElementById('modal');
 const dateInput = document.getElementById('dateInput');
@@ -102,10 +118,11 @@ const btnCloseSys = document.getElementById('closeSys');
 const btnResetAll = document.getElementById('resetAll');
 const modalTitle = document.getElementById('modalTitle');
 
+let currentBlok = 'A';
 let currentIndex = null;
 let payments = {};
 
-// Load data dari localStorage
+// Data simpan/muat
 function loadData() {
     const saved = localStorage.getItem('iuranData');
     if (saved) payments = JSON.parse(saved);
@@ -114,7 +131,7 @@ function saveData() {
     localStorage.setItem('iuranData', JSON.stringify(payments));
 }
 
-// Isi pilihan bulan
+// Pilihan bulan
 function initMonthOptions() {
     const months = [];
     const now = new Date();
@@ -132,17 +149,26 @@ function initMonthOptions() {
     monthSelect.value = current;
 }
 
-// Render 50 kotak
+// Ganti blok
+tabsContainer.addEventListener('click', e => {
+    if (!e.target.classList.contains('tab')) return;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    currentBlok = e.target.dataset.blok;
+    renderGrid();
+});
+
+// Tampilkan 50 kotak per blok
 function renderGrid() {
     gridContainer.innerHTML = '';
     const period = monthSelect.value;
     for (let i = 1; i <= 50; i++) {
-        const key = `${period}-${i}`;
+        const key = `${period}-${currentBlok}${i}`;
         const info = payments[key];
         const box = document.createElement('div');
         box.className = `box ${info ? 'paid' : 'unpaid'}`;
         box.innerHTML = `
-            <div class="num">${i}</div>
+            <div class="id">${currentBlok}${i}</div>
             <div class="date">${info ? info.date : 'Belum'}</div>
         `;
         box.addEventListener('click', () => openModal(i, period));
@@ -152,8 +178,8 @@ function renderGrid() {
 
 function openModal(num, period) {
     currentIndex = { num, period };
-    const key = `${period}-${num}`;
-    modalTitle.textContent = `Nomor ${num} - Pilih Tanggal Bayar`;
+    const key = `${period}-${currentBlok}${num}`;
+    modalTitle.textContent = `${currentBlok}${num} — Pilih Tanggal Bayar`;
     dateInput.value = payments[key]?.date || '';
     modal.classList.add('show');
 }
@@ -165,7 +191,7 @@ btnSave.addEventListener('click', () => {
         alert('Silakan pilih tanggal!');
         return;
     }
-    const key = `${currentIndex.period}-${currentIndex.num}`;
+    const key = `${currentIndex.period}-${currentBlok}${currentIndex.num}`;
     payments[key] = { date: dateInput.value };
     saveData();
     renderGrid();
@@ -174,7 +200,7 @@ btnSave.addEventListener('click', () => {
 
 btnDelete.addEventListener('click', () => {
     if (!confirm('Yakin hapus status pembayaran ini?')) return;
-    const key = `${currentIndex.period}-${currentIndex.num}`;
+    const key = `${currentIndex.period}-${currentBlok}${currentIndex.num}`;
     delete payments[key];
     saveData();
     renderGrid();
@@ -190,10 +216,10 @@ btnCloseSys.addEventListener('click', () => {
 });
 
 btnResetAll.addEventListener('click', () => {
-    if (!confirm('Yakin reset SEMUA data bulan ini?')) return;
+    if (!confirm(`Yakin reset Blok ${currentBlok} bulan ini? Semua data akan dihapus!`)) return;
     const period = monthSelect.value;
     for (let i = 1; i <= 50; i++) {
-        delete payments[`${period}-${i}`];
+        delete payments[`${period}-${currentBlok}${i}`];
     }
     saveData();
     renderGrid();
