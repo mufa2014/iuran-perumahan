@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pencatatan Iuran Perumahan</title>
+    <title>Iuran Perumahan Paradise Residence 4</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
         :root {
@@ -18,8 +18,27 @@
         }
         body { background: var(--latar); padding: 16px; max-width: 960px; margin: 0 auto; }
         
+        /* ===== HEADER IDENTITAS PERUMAHAN ===== */
+        .identitas {
+            background: linear-gradient(135deg, var(--biru), #005fcc);
+            color: #fff;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,122,255,0.2);
+        }
+        .identitas h1 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        .identitas .alamat {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
         .header { background: var(--putih); padding: 20px; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 16px; }
-        h1 { font-size: 20px; color: var(--gelap); margin-bottom: 16px; font-weight: 700; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
         select { padding: 10px 14px; border-radius: 10px; border: 1px solid #d1d1d6; font-size: 15px; background: var(--putih); min-width: 180px; }
         .legend { display: flex; gap: 20px; font-size: 14px; }
@@ -98,7 +117,7 @@
         .footer { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; }
         .footer button { flex: 1; min-width: 170px; background: var(--gelap); color: #fff; }
         .btn-reset-blok { background: var(--oranye); color: #fff; }
-        .btn-reset-semua { background: var(--merah); color: #fff; }
+        .btn-reset-bulan { background: var(--merah); color: #fff; }
 
         .stat-bar { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; flex-wrap: wrap; }
         .stat-item { font-size: 14px; }
@@ -109,13 +128,20 @@
             .box { padding: 14px 6px; min-height: 70px; }
             .box .id { font-size: 17px; }
             .box .date { font-size: 11px; }
+            .identitas h1 { font-size: 17px; }
+            .identitas .alamat { font-size: 12px; }
         }
     </style>
 </head>
 <body>
 
+<!-- ===== NAMA & ALAMAT PERUMAHAN ===== -->
+<div class="identitas">
+    <h1>🏠 IURAN RUTIN PERUMAHAN PARADISE RESIDENCE 4</h1>
+    <p class="alamat">JL. HAJI UMAR - KAMPAK PANGKALPINANG</p>
+</div>
+
 <div class="header">
-    <h1>🏠 Pencatatan Iuran Perumahan</h1>
     <div class="top-bar">
         <label>Periode Bulan:
             <select id="monthSelect"></select>
@@ -190,12 +216,12 @@
 <div class="footer">
     <button id="btnSelesai">✅ Selesai / Segarkan</button>
     <button id="btnUrung" class="btn-reset-blok">⚠️ Urungkan Blok Ini</button>
-    <button id="btnResetSemua" class="btn-reset-semua">❌ Reset SEMUA Data</button>
+    <button id="btnResetBulan" class="btn-reset-bulan">🗑️ Reset Bulan Ini Saja</button>
 </div>
 
 <script>
 const KATA_SANDI = "12345";
-const IURAN_PER_RUMAH = 10000; // Default Rp 10.000
+const IURAN_PER_RUMAH = 10000;
 
 const monthSelect = document.getElementById('monthSelect');
 const tabsContainer = document.getElementById('tabs');
@@ -209,10 +235,9 @@ const btnSimpan = document.getElementById('btnSimpan');
 const btnHapus = document.getElementById('btnHapus');
 const btnSelesai = document.getElementById('btnSelesai');
 const btnUrung = document.getElementById('btnUrung');
-const btnResetSemua = document.getElementById('btnResetSemua');
+const btnResetBulan = document.getElementById('btnResetBulan');
 const btnBatalSandi = document.getElementById('btnBatalSandi');
 const btnKonfirmasi = document.getElementById('btnKonfirmasi');
-const modalJudul = document.getElementById('modalJudul');
 const jmlSudahEl = document.getElementById('jmlSudah');
 const jmlBelumEl = document.getElementById('jmlBelum');
 const namaBulanEl = document.getElementById('namaBulan');
@@ -225,7 +250,6 @@ let currentIndex = null;
 let tindakanLulus = null;
 let payments = {};
 
-// Format Rupiah
 function formatRupiah(angka) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 }
@@ -263,7 +287,6 @@ tabsContainer.addEventListener('click', e => {
     const tabJenis = e.target.dataset.tab;
     currentTab = tabJenis;
 
-    // Sembunyikan semua konten
     document.getElementById('kontenGrid').classList.remove('active');
     document.getElementById('kontenRekap').classList.remove('active');
     document.getElementById('kontenBlok').classList.remove('active');
@@ -394,30 +417,38 @@ btnKonfirmasi.addEventListener('click', () => {
 function lanjutkanTindakan() {
     if (!tindakanLulus) return;
     const periode = monthSelect.value;
+    const namaPeriode = monthSelect.options[monthSelect.selectedIndex].text;
 
     if (tindakanLulus === 'resetBlok') {
-        if (!confirm(`⚠️ Yakin URUNGKAN semua data Blok ${currentBlok} bulan ini?`)) return;
+        if (!confirm(`⚠️ Yakin URUNGKAN semua data Blok ${currentBlok} pada ${namaPeriode}?`)) return;
         for (let no = 1; no <= 50; no++) {
             delete payments[`${periode}-${currentBlok}${no}`];
         }
         simpanData();
         tampilkanGrid();
-        alert(`✅ Blok ${currentBlok} sudah dikembalikan ke Belum Bayar`);
+        alert(`✅ Blok ${currentBlok} pada ${namaPeriode} sudah dikembalikan ke Belum Bayar`);
     }
 
-    if (tindakanLulus === 'resetSemua') {
-        if (!confirm('⚠️ PERINGATAN!\nIni akan MENGHAPUS SEMUA data seluruh blok & bulan!')) return;
-        if (!confirm('Yakin BENAR-BENAR hapus SEMUA? Tidak bisa dikembalikan!')) return;
-        payments = {};
-        localStorage.removeItem('dataIuran');
+    if (tindakanLulus === 'resetBulan') {
+        if (!confirm(`⚠️ PERINGATAN!\nIni akan MENGHAPUS SEMUA data seluruh blok pada:\n📅 ${namaPeriode}\n\nData bulan lain TETAP AMAN!\nYakin lanjut?`)) return;
+        if (!confirm('Yakin BENAR-BENAR hapus SEMUA data bulan ini?')) return;
+        
+        const awalanKunci = `${periode}-`;
+        for (const kunci in payments) {
+            if (kunci.startsWith(awalanKunci)) {
+                delete payments[kunci];
+            }
+        }
+        
+        simpanData();
         tampilkanGrid();
-        alert('✅ Semua data sudah dihapus');
+        alert(`✅ Semua data pada ${namaPeriode} sudah dihapus\nData bulan lain tetap tersimpan.`);
     }
     tindakanLulus = null;
 }
 
 btnUrung.addEventListener('click', () => bukaKataSandi('resetBlok'));
-btnResetSemua.addEventListener('click', () => bukaKataSandi('resetSemua'));
+btnResetBulan.addEventListener('click', () => bukaKataSandi('resetBulan'));
 
 muatData();
 isiPilihanBulan();
