@@ -9,13 +9,34 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
+    <!-- Library untuk PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        
+        /* Tema Terang (Default) */
         :root {
             --hijau: #34c759; --merah: #ff3b30; --biru: #007aff; --oranye: #ff9500;
             --abu: #e5e5e7; --gelap: #1d1d1f; --putih: #ffffff; --latar: #f2f2f7;
+            --kartu: #ffffff; --teks: #1d1d1f; --batas: #e5e5e7;
+            --bayangan: rgba(0,0,0,0.06);
         }
-        body { background: var(--latar); padding: 16px; max-width: 960px; margin: 0 auto; }
+        
+        /* Tema Gelap */
+        .mode-gelap {
+            --abu: #2c2c2e; --gelap: #f5f5f7; --putih: #1c1c1e; --latar: #000000;
+            --kartu: #1c1c1e; --teks: #f5f5f7; --batas: #38383a;
+            --bayangan: rgba(0,0,0,0.3);
+        }
+        
+        body { 
+            background: var(--latar); color: var(--teks);
+            padding: 16px; max-width: 960px; margin: 0 auto;
+            transition: background 0.3s, color 0.3s;
+        }
+        
         .identitas {
             background: linear-gradient(135deg, var(--biru), #005fcc); color: #fff;
             padding: 24px 20px; border-radius: 16px; text-align: center; margin-bottom: 16px;
@@ -28,16 +49,23 @@
         }
         .status-sinkron.terhubung { background: #d1fae5; color: #065f46; font-weight: 500; }
         .status-sinkron.terputus { background: #fee2e2; color: #991b1b; }
+        .kontrol-atas { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .btn-mode { 
+            background: var(--kartu); border: none; padding: 8px 14px; border-radius: 10px;
+            cursor: pointer; font-size: 14px; box-shadow: 0 2px 6px var(--bayangan);
+        }
+        .info-petugas { font-size: 14px; font-weight: 500; padding: 6px 12px; background: var(--kartu); border-radius: 10px; }
+        
         .header {
-            background: var(--putih); padding: 20px; border-radius: 16px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 16px;
+            background: var(--kartu); padding: 20px; border-radius: 16px;
+            box-shadow: 0 2px 12px var(--bayangan); margin-bottom: 16px;
         }
         .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
         select {
-            padding: 10px 14px; border-radius: 10px; border: 1px solid #d1d1d6;
-            font-size: 15px; background: var(--putih); min-width: 180px;
+            padding: 10px 14px; border-radius: 10px; border: 1px solid var(--batas);
+            font-size: 15px; background: var(--kartu); color: var(--teks); min-width: 180px;
         }
-        .legend { display: flex; gap: 20px; font-size: 14px; }
+        .legend { display: flex; gap: 20px; font-size: 14px; flex-wrap: wrap; }
         .legend span { display: flex; align-items: center; gap: 6px; }
         .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
         .dot.paid { background: var(--hijau); }
@@ -46,30 +74,31 @@
         .tab {
             padding: 12px 20px; border-radius: 12px 12px 0 0; background: var(--abu);
             border: none; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s ease;
+            color: var(--teks);
         }
-        .tab:hover { background: #d1d1d6; }
-        .tab.active { background: var(--putih); box-shadow: 0 -3px 0 var(--biru); color: var(--biru); }
+        .tab:hover { opacity: 0.8; }
+        .tab.active { background: var(--kartu); box-shadow: 0 -3px 0 var(--biru); color: var(--biru); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
         .box {
-            background: var(--putih); border-radius: 12px; padding: 18px 10px; text-align: center;
+            background: var(--kartu); border-radius: 12px; padding: 18px 10px; text-align: center;
             cursor: pointer; border: 2px solid transparent; transition: all 0.25s ease;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05); min-height: 80px;
+            box-shadow: 0 2px 6px var(--bayangan); min-height: 80px;
         }
         .box:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
-        .box.unpaid { background: #fff2f2; border-color: var(--merah); }
-        .box.paid { background: #f2fff4; border-color: var(--hijau); }
+        .box.unpaid { background: rgba(255,59,48,0.08); border-color: var(--merah); }
+        .box.paid { background: rgba(52,199,89,0.08); border-color: var(--hijau); }
         .box .id { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
-        .box .date { font-size: 13px; color: #636366; }
+        .box .date { font-size: 13px; color: #8e8e93; }
         .rekap-card {
-            background: var(--putih); border-radius: 16px; padding: 24px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            background: var(--kartu); border-radius: 16px; padding: 24px;
+            box-shadow: 0 2px 12px var(--bayangan);
         }
-        .rekap-card h2 { font-size: 18px; margin-bottom: 20px; color: var(--gelap); }
+        .rekap-card h2 { font-size: 18px; margin-bottom: 20px; }
         .rekap-baris {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 14px 0; border-bottom: 1px solid #eee; font-size: 15px;
+            padding: 14px 0; border-bottom: 1px solid var(--batas); font-size: 15px;
         }
         .rekap-baris:last-child { border-bottom: none; }
         .rekap-baris.total {
@@ -79,134 +108,208 @@
         .uang { font-weight: 600; color: var(--biru); }
         .uang.besar { font-size: 19px; color: #0066cc; }
         .ket { font-size: 13px; color: #8e8e93; margin-top: 4px; }
+        
+        /* Notifikasi */
+        .notifikasi {
+            position: fixed; top: 20px; right: 20px; background: var(--kartu);
+            padding: 16px 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 9999; transform: translateX(120%); transition: transform 0.3s ease;
+            max-width: 300px;
+        }
+        .notifikasi.tampil { transform: translateX(0); }
+        .notifikasi h4 { font-size: 14px; margin-bottom: 4px; color: var(--biru); }
+        .notifikasi p { font-size: 13px; color: var(--teks); }
+        
+        /* Riwayat */
+        .daftar-riwayat { margin-top: 16px; max-height: 300px; overflow-y: auto; }
+        .item-riwayat {
+            padding: 10px; border-bottom: 1px solid var(--batas); font-size: 13px;
+        }
+        .item-riwayat:last-child { border-bottom: none; }
+        .item-riwayat .waktu { color: #888; font-size: 12px; }
+        .item-riwayat .nama { font-weight: 600; }
+        
         .modal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none;
             align-items: center; justify-content: center; padding: 20px; z-index: 999;
         }
         .modal.show { display: flex; }
         .modal-content {
-            background: var(--putih); padding: 28px; border-radius: 20px; width: 100%;
+            background: var(--kartu); padding: 28px; border-radius: 20px; width: 100%;
             max-width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
         .modal-content h3 { margin-bottom: 20px; font-size: 17px; font-weight: 600; }
-        input[type="date"], input[type="password"] {
+        input {
             width: 100%; padding: 12px; margin-bottom: 16px;
-            border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px;
+            border: 1px solid var(--batas); border-radius: 10px; font-size: 16px;
+            background: var(--putih); color: var(--teks);
         }
         .btn-group { display: flex; gap: 10px; }
         button {
             flex: 1; padding: 12px; border: none; border-radius: 10px;
-            font-size: 15px; cursor: pointer; font-weight: 600;
+            font-size: 15px; cursor: pointer; font-weight: 600; transition: all 0.2s;
         }
-        .btn-cancel { background: var(--abu); color: var(--gelap); }
+        .btn-cancel { background: var(--abu); color: var(--teks); }
         .btn-save { background: var(--biru); color: #fff; }
         .btn-delete { background: var(--merah); color: #fff; margin-top: 10px; width: 100%; }
         .btn-pass-ok { background: var(--biru); color: #fff; margin-top: 8px; width: 100%; }
+        .btn-riwayat { background: var(--abu); color: var(--teks); margin-top: 10px; width: 100%; }
         .footer { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; }
-        .footer button { flex: 1; min-width: 170px; background: var(--gelap); color: #fff; }
+        .footer button { flex: 1; min-width: 140px; }
+        #btnReload { background: var(--biru); color: #fff; }
+        #btnPDF { background: var(--hijau); color: #fff; }
         .btn-reset-blok { background: var(--oranye); color: #fff; }
         .btn-reset-bulan { background: var(--merah); color: #fff; }
-        .stat-bar { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; flex-wrap: wrap; }
+        .stat-bar { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--batas); flex-wrap: wrap; }
         .stat-item { font-size: 14px; }
         .stat-item b { color: var(--biru); }
-        .memuat { text-align: center; padding: 30px; color: #666; }
+        .memuat { text-align: center; padding: 30px; color: #888; }
+        .halaman-login {
+            display: flex; align-items: center; justify-content: center; min-height: 80vh;
+        }
+        .kotak-login {
+            background: var(--kartu); padding: 32px; border-radius: 20px; box-shadow: 0 4px 20px var(--bayangan);
+            width: 100%; max-width: 360px; text-align: center;
+        }
+        .kotak-login h2 { margin-bottom: 24px; }
+        .sembunyi { display: none !important; }
+        
         @media (max-width: 480px) {
             .grid { gap: 8px; }
             .box { padding: 14px 6px; min-height: 70px; }
             .box .id { font-size: 17px; }
-            .box .date { font-size: 11px; }
             .identitas h1 { font-size: 18px; }
-            .identitas .alamat { font-size: 13px; }
+            .footer button { min-width: 100px; font-size: 13px; }
         }
     </style>
 </head>
 <body>
 
-<div class="identitas">
-    <h1>IURAN RUTIN<br>PERUMAHAN PARADISE RESIDENCE 4</h1>
-    <p class="alamat">JL. HAJI UMAR<br>KAMPAK - PANGKALPINANG</p>
-    <span class="status-sinkron" id="statusFirebase">🔄 Memuat...</span>
+<!-- Notifikasi -->
+<div class="notifikasi" id="kotakNotifikasi">
+    <h4 id="notifJudul"></h4>
+    <p id="notifIsi"></p>
 </div>
 
-<div class="header">
-    <div class="top-bar">
-        <label>Periode Bulan:
-            <select id="monthSelect"></select>
-        </label>
-        <div class="legend">
-            <span><span class="dot paid"></span> Sudah Bayar</span>
-            <span><span class="dot unpaid"></span> Belum Bayar</span>
-        </div>
-    </div>
-
-    <div class="tabs" id="tabs">
-        <button class="tab active" data-tab="blok" data-blok="A">Blok A</button>
-        <button class="tab" data-tab="blok" data-blok="B">Blok B</button>
-        <button class="tab" data-tab="blok" data-blok="C">Blok C</button>
-        <button class="tab" data-tab="blok" data-blok="D">Blok D</button>
-        <button class="tab" data-tab="rekap">📊 Rekapitulasi</button>
-    </div>
-
-    <div class="tab-content active" id="kontenBlok">
-        <div class="stat-bar">
-            <div class="stat-item">Sudah bayar: <b id="jmlSudah">0</b> / 50</div>
-            <div class="stat-item">Belum bayar: <b id="jmlBelum">0</b> / 50</div>
-        </div>
+<!-- Halaman Login -->
+<div class="halaman-login" id="halamanLogin">
+    <div class="kotak-login">
+        <h2>🔐 Masuk Sistem Iuran</h2>
+        <input type="text" id="inputPengguna" placeholder="Nama Pengguna">
+        <input type="password" id="inputSandiLogin" placeholder="Kata Sandi">
+        <button class="btn-save" id="btnMasuk">Masuk</button>
+        <p style="margin-top: 16px; font-size: 12px; color: #888;">
+            Petugas A/B/C/D → 1234 + Huruf<br>Admin: 12345
+        </p>
     </div>
 </div>
 
-<div class="tab-content active" id="kontenGrid">
-    <div class="grid" id="gridContainer">
-        <div class="memuat">🔄 Memuat data dari server...</div>
+<!-- Halaman Utama -->
+<div id="halamanUtama" class="sembunyi">
+    <div class="kontrol-atas">
+        <span class="info-petugas" id="infoPetugas"></span>
+        <button class="btn-mode" id="btnMode">🌙 Gelap</button>
     </div>
-</div>
 
-<div class="tab-content" id="kontenRekap">
-    <div class="rekap-card">
-        <h2>📊 Rekapitulasi Iuran — <span id="namaBulan"></span></h2>
-        <p class="ket">Iuran per rumah: <strong>Rp 10.000</strong></p>
-        <div id="rekapPerBlok">
-            <div class="memuat">🔄 Memuat rekapitulasi...</div>
-        </div>
-        <div class="rekap-baris total">
-            <span>💰 TOTAL SELURUH BLOK</span>
-            <span class="uang besar" id="totalSemuaBlok">Rp 0</span>
-        </div>
+    <div class="identitas">
+        <h1>IURAN RUTIN<br>PERUMAHAN PARADISE RESIDENCE 4</h1>
+        <p class="alamat">JL. HAJI UMAR<br>KAMPAK - PANGKALPINANG</p>
+        <span class="status-sinkron" id="statusFirebase">🔄 Memuat...</span>
     </div>
-</div>
 
-<div class="modal" id="modalBayar">
-    <div class="modal-content">
-        <h3 id="modalJudul">Pilih Tanggal Bayar</h3>
-        <input type="date" id="tglBayar">
-        <div class="btn-group">
-            <button class="btn-cancel" id="btnBatal">Batal</button>
-            <button class="btn-save" id="btnSimpan">Simpan</button>
+    <div class="header">
+        <div class="top-bar">
+            <label>Periode Bulan:
+                <select id="monthSelect"></select>
+            </label>
+            <div class="legend">
+                <span><span class="dot paid"></span> Sudah Bayar</span>
+                <span><span class="dot unpaid"></span> Belum Bayar</span>
+            </div>
         </div>
-        <button class="btn-delete" id="btnHapus">Hapus Status Bayar</button>
-    </div>
-</div>
 
-<div class="modal" id="modalSandi">
-    <div class="modal-content">
-        <h3>🔐 Masukkan Kata Sandi</h3>
-        <input type="password" id="inputSandi" placeholder="Kata sandi: 12345">
-        <div class="btn-group">
-            <button class="btn-cancel" id="btnBatalSandi">Batal</button>
-            <button class="btn-pass-ok" id="btnKonfirmasi">Konfirmasi</button>
+        <div class="tabs" id="tabs">
+            <button class="tab active" data-tab="blok" data-blok="A">Blok A</button>
+            <button class="tab" data-tab="blok" data-blok="B">Blok B</button>
+            <button class="tab" data-tab="blok" data-blok="C">Blok C</button>
+            <button class="tab" data-tab="blok" data-blok="D">Blok D</button>
+            <button class="tab" data-tab="rekap">📊 Rekapitulasi</button>
+        </div>
+
+        <div class="tab-content active" id="kontenBlok">
+            <div class="stat-bar">
+                <div class="stat-item">Sudah bayar: <b id="jmlSudah">0</b> / 50</div>
+                <div class="stat-item">Belum bayar: <b id="jmlBelum">0</b> / 50</div>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="footer">
-    <button id="btnSelesai">🔄 Segarkan Data</button>
-    <button id="btnUrung" class="btn-reset-blok">⚠️ Urungkan Blok Ini</button>
-    <button id="btnResetBulan" class="btn-reset-bulan">🗑️ Reset Bulan Ini Saja</button>
+    <div class="tab-content active" id="kontenGrid">
+        <div class="grid" id="gridContainer">
+            <div class="memuat">🔄 Memuat data dari server...</div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="kontenRekap">
+        <div class="rekap-card" id="bagianRekap">
+            <h2>📊 Rekapitulasi Iuran — <span id="namaBulan"></span></h2>
+            <p class="ket">Iuran per rumah: <strong>Rp 10.000</strong></p>
+            <div id="rekapPerBlok">
+                <div class="memuat">🔄 Memuat rekapitulasi...</div>
+            </div>
+            <div class="rekap-baris total">
+                <span>💰 TOTAL SELURUH BLOK</span>
+                <span class="uang besar" id="totalSemuaBlok">Rp 0</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modalBayar">
+        <div class="modal-content">
+            <h3 id="modalJudul">Pilih Tanggal Bayar</h3>
+            <input type="date" id="tglBayar">
+            <div class="btn-group">
+                <button class="btn-cancel" id="btnBatal">Batal</button>
+                <button class="btn-save" id="btnSimpan">Simpan</button>
+            </div>
+            <button class="btn-delete" id="btnHapus">Hapus Status Bayar</button>
+            <button class="btn-riwayat" id="btnLihatRiwayat">📋 Lihat Riwayat Perubahan</button>
+        </div>
+    </div>
+
+    <div class="modal" id="modalRiwayat">
+        <div class="modal-content" style="max-width: 380px;">
+            <h3 id="judulRiwayat">Riwayat Perubahan</h3>
+            <div class="daftar-riwayat" id="daftarRiwayat">
+                <div class="memuat">Memuat riwayat...</div>
+            </div>
+            <button class="btn-cancel" style="margin-top: 16px;" id="btnTutupRiwayat">Tutup</button>
+        </div>
+    </div>
+
+    <div class="modal" id="modalSandi">
+        <div class="modal-content">
+            <h3>🔐 Konfirmasi Aksi</h3>
+            <p style="font-size: 14px; margin-bottom: 12px;" id="teksKonfirmasi"></p>
+            <input type="password" id="inputSandiAksi" placeholder="Kata sandi Anda">
+            <div class="btn-group">
+                <button class="btn-cancel" id="btnBatalAksi">Batal</button>
+                <button class="btn-pass-ok" id="btnKonfirmasiAksi">Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <button id="btnReload">🔄 Segarkan</button>
+        <button id="btnPDF">📄 Export PDF</button>
+        <button id="btnUrung" class="btn-reset-blok">⚠️ Urung Blok</button>
+        <button id="btnResetBulan" class="btn-reset-bulan">🗑️ Reset Bulan</button>
+    </div>
 </div>
 
 <script>
 // ==========================================
-// ✅ KONFIGURASI FIREBASE — SUDAH DIISI MILIKMU
+// KONFIGURASI & DATA
 // ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyBy6wCCaiUzTjkJ_NnnCwFSE7Ui0V2jUKE",
@@ -218,48 +321,98 @@ const firebaseConfig = {
   measurementId: "G-6Q3QCQZ39V"
 };
 
+// Data Petugas
+const DAFTAR_PETUGAS = {
+    petugasA: { sandi: "1234A", nama: "Petugas Blok A", blok: "A" },
+    petugasB: { sandi: "1234B", nama: "Petugas Blok B", blok: "B" },
+    petugasC: { sandi: "1234C", nama: "Petugas Blok C", blok: "C" },
+    petugasD: { sandi: "1234D", nama: "Petugas Blok D", blok: "D" },
+    admin:    { sandi: "12345", nama: "Administrator", blok: "SEMUA" }
+};
+
+const IURAN_PER_RUMAH = 10000;
+
 // Inisialisasi Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Pengaturan
-const KATA_SANDI = "12345";
-const IURAN_PER_RUMAH = 10000;
-
-// Elemen DOM
-const monthSelect = document.getElementById('monthSelect');
-const tabsContainer = document.getElementById('tabs');
-const gridContainer = document.getElementById('gridContainer');
-const modalBayar = document.getElementById('modalBayar');
-const modalSandi = document.getElementById('modalSandi');
-const tglBayar = document.getElementById('tglBayar');
-const inputSandi = document.getElementById('inputSandi');
-const btnBatal = document.getElementById('btnBatal');
-const btnSimpan = document.getElementById('btnSimpan');
-const btnHapus = document.getElementById('btnHapus');
-const btnSelesai = document.getElementById('btnSelesai');
-const btnUrung = document.getElementById('btnUrung');
-const btnResetBulan = document.getElementById('btnResetBulan');
-const btnBatalSandi = document.getElementById('btnBatalSandi');
-const btnKonfirmasi = document.getElementById('btnKonfirmasi');
-const jmlSudahEl = document.getElementById('jmlSudah');
-const jmlBelumEl = document.getElementById('jmlBelum');
-const namaBulanEl = document.getElementById('namaBulan');
-const rekapPerBlokEl = document.getElementById('rekapPerBlok');
-const totalSemuaBlokEl = document.getElementById('totalSemuaBlok');
-const statusFirebaseEl = document.getElementById('statusFirebase');
-
+// Status Global
+let penggunaSaatIni = null;
 let currentBlok = 'A';
 let currentTab = 'blok';
 let currentIndex = null;
 let tindakanLulus = null;
 let pembayaranRealtime = {};
 let pendengarPerubahan = null;
+let daftarPerubahanDiketahui = new Set();
 
+// Elemen
+const halamanLogin = document.getElementById('halamanLogin');
+const halamanUtama = document.getElementById('halamanUtama');
+const infoPetugasEl = document.getElementById('infoPetugas');
+const btnMode = document.getElementById('btnMode');
+const kotakNotifikasi = document.getElementById('kotakNotifikasi');
+
+// ==========================================
+// FUNGSI UMUM
+// ==========================================
 function formatRupiah(angka) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 }
 
+function formatTanggal(ts) {
+    if (!ts) return '-';
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleDateString('id-ID') + ' ' + d.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+}
+
+// ==========================================
+// 🌙 MODE GELAP / TERANG
+// ==========================================
+function aturTema() {
+    const gelap = localStorage.getItem('tema') === 'gelap';
+    document.body.classList.toggle('mode-gelap', gelap);
+    btnMode.textContent = gelap ? '☀️ Terang' : '🌙 Gelap';
+}
+btnMode.addEventListener('click', () => {
+    const mauGelap = !document.body.classList.contains('mode-gelap');
+    document.body.classList.toggle('mode-gelap', mauGelap);
+    localStorage.setItem('tema', mauGelap ? 'gelap' : 'terang');
+});
+aturTema();
+
+// ==========================================
+// 🔐 LOGIN
+// ==========================================
+document.getElementById('btnMasuk').addEventListener('click', () => {
+    const pengguna = document.getElementById('inputPengguna').value.trim();
+    const sandi = document.getElementById('inputSandiLogin').value;
+    
+    if (DAFTAR_PETUGAS[pengguna] && DAFTAR_PETUGAS[pengguna].sandi === sandi) {
+        penggunaSaatIni = { id: pengguna, ...DAFTAR_PETUGAS[pengguna] };
+        halamanLogin.classList.add('sembunyi');
+        halamanUtama.classList.remove('sembunyi');
+        infoPetugasEl.textContent = `👤 ${penggunaSaatIni.nama}`;
+        isiPilihanBulan();
+        tampilkanGrid();
+    } else {
+        alert('❌ Nama pengguna atau kata sandi salah!');
+    }
+});
+
+// ==========================================
+// 🔔 NOTIFIKASI
+// ==========================================
+function tampilkanNotifikasi(judul, isi) {
+    document.getElementById('notifJudul').textContent = judul;
+    document.getElementById('notifIsi').textContent = isi;
+    kotakNotifikasi.classList.add('tampil');
+    setTimeout(() => kotakNotifikasi.classList.remove('tampil'), 4000);
+}
+
+// ==========================================
+// BAGIAN DATA & TAMPILAN
+// ==========================================
 function isiPilihanBulan() {
     const daftarBulan = [];
     const sekarang = new Date();
@@ -268,55 +421,78 @@ function isiPilihanBulan() {
             daftarBulan.push(`${thn}-${String(bln).padStart(2,'0')}`);
         }
     }
-    monthSelect.innerHTML = daftarBulan.map(kode => {
+    document.getElementById('monthSelect').innerHTML = daftarBulan.map(kode => {
         const [thn, bln] = kode.split('-');
         const namaBulan = new Date(thn, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
         return `<option value="${kode}">${namaBulan}</option>`;
     }).join('');
     const kodeSekarang = `${sekarang.getFullYear()}-${String(sekarang.getMonth() + 1).padStart(2,'0')}`;
-    monthSelect.value = kodeSekarang;
+    document.getElementById('monthSelect').value = kodeSekarang;
+}
+
+function bolehUbahBlok(blok) {
+    return penggunaSaatIni.blok === blok || penggunaSaatIni.blok === 'SEMUA';
 }
 
 function mulaiDengarPerubahan(periode, blok) {
     if (pendengarPerubahan) pendengarPerubahan();
+    daftarPerubahanDiketahui.clear();
 
-    statusFirebaseEl.textContent = "🔄 Memuat...";
-    statusFirebaseEl.className = "status-sinkron";
+    document.getElementById('statusFirebase').textContent = "🔄 Memuat...";
+    document.getElementById('statusFirebase').className = "status-sinkron";
 
     pendengarPerubahan = db.collection('iuran')
         .where('periode', '==', periode)
         .where('blok', '==', blok)
-        .onSnapshot(
-            (snapshot) => {
-                pembayaranRealtime = {};
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    pembayaranRealtime[data.noRumah] = {
-                        tanggal: data.tanggal,
-                        diubahOleh: data.diubahOleh || 'tidak diketahui',
-                        waktuDiubah: data.waktuDiubah
-                    };
-                });
-                statusFirebaseEl.textContent = "✓ Terhubung & Terbaru";
-                statusFirebaseEl.className = "status-sinkron terhubung";
-                tampilkanGridDariData();
-            },
-            (error) => {
-                console.error("Kesalahan Firebase:", error);
-                statusFirebaseEl.textContent = "⚠️ Terputus";
-                statusFirebaseEl.className = "status-sinkron terputus";
-            }
-        );
+        .onSnapshot(snapshot => {
+            snapshot.docChanges().forEach(perubahan => {
+                const id = perubahan.doc.id;
+                if (daftarPerubahanDiketahui.has(id)) return;
+                daftarPerubahanDiketahui.add(id);
+                
+                const data = perubahan.doc.data();
+                if (perubahan.type === 'added') {
+                    tampilkanNotifikasi('✅ Pembayaran Dicatat', `${data.noRumah} — dibayar ${data.tanggal}\noleh ${data.diubahOleh?.split(' ')[0] || 'Seseorang'}`);
+                } else if (perubahan.type === 'removed') {
+                    tampilkanNotifikasi('↩️ Status Dihapus', `${data.noRumah} — dikembalikan ke Belum Bayar`);
+                }
+            });
+
+            pembayaranRealtime = {};
+            snapshot.forEach(doc => {
+                const d = doc.data();
+                pembayaranRealtime[d.noRumah] = {
+                    tanggal: d.tanggal,
+                    diubahOleh: d.diubahOleh || 'Tidak diketahui',
+                    waktuDiubah: d.waktuDiubah,
+                    namaPengguna: d.namaPengguna || 'Tidak diketahui'
+                };
+            });
+
+            document.getElementById('statusFirebase').textContent = "✓ Terhubung & Terbaru";
+            document.getElementById('statusFirebase').className = "status-sinkron terhubung";
+            tampilkanGridDariData();
+        }, err => {
+            console.error(err);
+            document.getElementById('statusFirebase').textContent = "⚠️ Terputus";
+            document.getElementById('statusFirebase').className = "status-sinkron terputus";
+        });
 }
 
 async function simpanKeFirebase(periode, blok, noRumah, tanggal) {
-    const kunciDokumen = `${periode}-${blok}${noRumah}`;
-    const ref = db.collection('iuran').doc(kunciDokumen);
+    if (!bolehUbahBlok(blok)) {
+        alert('❌ Anda hanya bisa mengubah data blok Anda saja!');
+        return;
+    }
+
+    const kunci = `${periode}-${blok}${noRumah}`;
+    const ref = db.collection('iuran').doc(kunci);
 
     if (tanggal) {
         await ref.set({
             periode, blok, noRumah: `${blok}${noRumah}`, tanggal,
-            diubahOleh: navigator.userAgent.substring(0, 40),
+            namaPengguna: penggunaSaatIni.nama,
+            diubahOleh: penggunaSaatIni.id,
             waktuDiubah: firebase.firestore.FieldValue.serverTimestamp()
         });
     } else {
@@ -325,7 +501,8 @@ async function simpanKeFirebase(periode, blok, noRumah, tanggal) {
 }
 
 function tampilkanGridDariData() {
-    gridContainer.innerHTML = '';
+    const wadah = document.getElementById('gridContainer');
+    wadah.innerHTML = '';
     let sudah = 0, belum = 0;
 
     for (let no = 1; no <= 50; no++) {
@@ -339,24 +516,22 @@ function tampilkanGridDariData() {
             <div class="id">${noRumah}</div>
             <div class="date">${info ? info.tanggal : 'Belum Bayar'}</div>
         `;
-        kotak.addEventListener('click', () => bukaModalBayar(no, monthSelect.value));
-        gridContainer.appendChild(kotak);
+        kotak.addEventListener('click', () => bukaModalBayar(no, document.getElementById('monthSelect').value));
+        wadah.appendChild(kotak);
     }
 
-    jmlSudahEl.textContent = sudah;
-    jmlBelumEl.textContent = belum;
+    document.getElementById('jmlSudah').textContent = sudah;
+    document.getElementById('jmlBelum').textContent = belum;
 }
 
 function tampilkanGrid() {
-    mulaiDengarPerubahan(monthSelect.value, currentBlok);
+    mulaiDengarPerubahan(document.getElementById('monthSelect').value, currentBlok);
 }
 
 async function tampilkanRekap() {
-    const periode = monthSelect.value;
+    const periode = document.getElementById('monthSelect').value;
     const [thn, bln] = periode.split('-');
-    namaBulanEl.textContent = new Date(thn, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-
-    rekapPerBlokEl.innerHTML = '<div class="memuat">🔄 Menghitung...</div>';
+    document.getElementById('namaBulan').textContent = new Date(thn, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
     const daftarBlok = ['A', 'B', 'C', 'D'];
     let totalSemua = 0;
@@ -369,21 +544,66 @@ async function tampilkanRekap() {
             .get();
 
         const sudah = snapshot.size;
-        const jumlahUang = sudah * IURAN_PER_RUMAH;
-        totalSemua += jumlahUang;
+        const jumlah = sudah * IURAN_PER_RUMAH;
+        totalSemua += jumlah;
 
         html += `
         <div class="rekap-baris">
             <span>Blok ${blok} — ${sudah} rumah / 50</span>
-            <span class="uang">${formatRupiah(jumlahUang)}</span>
+            <span class="uang">${formatRupiah(jumlah)}</span>
         </div>`;
     }
 
-    rekapPerBlokEl.innerHTML = html;
-    totalSemuaBlokEl.textContent = formatRupiah(totalSemua);
+    document.getElementById('rekapPerBlok').innerHTML = html;
+    document.getElementById('totalSemuaBlok').textContent = formatRupiah(totalSemua);
 }
 
-tabsContainer.addEventListener('click', e => {
+// ==========================================
+// 📄 EXPORT PDF
+// ==========================================
+document.getElementById('btnPDF').addEventListener('click', async () => {
+    const btn = document.getElementById('btnPDF');
+    btn.textContent = "⏳ Membuat PDF..."; btn.disabled = true;
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text("IURAN RUTIN - PARADISE RESIDENCE 4", 105, 20, { align: 'center' });
+    doc.setFontSize(11);
+    doc.text("JL. HAJI UMAR — KAMPAK - PANGKALPINANG", 105, 30, { align: 'center' });
+    doc.text("Periode: " + document.getElementById('namaBulan').textContent, 105, 40, { align: 'center' });
+    doc.text("Iuran per rumah: Rp 10.000", 105, 48, { align: 'center' });
+
+    let y = 60;
+    const baris = document.querySelectorAll('#rekapPerBlok .rekap-baris');
+    baris.forEach(b => {
+        const label = b.querySelector('span:first-child').textContent;
+        const nilai = b.querySelector('.uang').textContent;
+        doc.text(label, 20, y);
+        doc.text(nilai, 190, y, { align: 'right' });
+        y += 10;
+    });
+
+    const total = document.getElementById('totalSemuaBlok').textContent;
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text("TOTAL SELURUH BLOK", 20, y + 10);
+    doc.text(total, 190, y + 10, { align: 'right' });
+
+    doc.text("Dicetak oleh: " + penggunaSaatIni.nama, 20, y + 30);
+    doc.text(new Date().toLocaleString('id-ID'), 190, y + 30, { align: 'right' });
+
+    doc.save(`IURAN-${document.getElementById('monthSelect').value}.pdf`);
+    
+    btn.textContent = "📄 Export PDF"; btn.disabled = false;
+    tampilkanNotifikasi('✅ PDF Berhasil', 'File rekapitulasi sudah terunduh');
+});
+
+// ==========================================
+// TAB & MODAL
+// ==========================================
+document.getElementById('tabs').addEventListener('click', e => {
     if (!e.target.classList.contains('tab')) return;
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     e.target.classList.add('active');
@@ -400,107 +620,150 @@ tabsContainer.addEventListener('click', e => {
         document.getElementById('kontenGrid').classList.add('active');
         document.getElementById('kontenBlok').classList.add('active');
         tampilkanGrid();
-    } else if (tabJenis === 'rekap') {
+    } else {
         document.getElementById('kontenRekap').classList.add('active');
         tampilkanRekap();
     }
 });
 
 function bukaModalBayar(no, periode) {
+    if (!bolehUbahBlok(currentBlok)) {
+        alert(`🔒 Anda hanya bertugas di Blok ${penggunaSaatIni.blok}`);
+        return;
+    }
     currentIndex = { no, periode };
     const noRumah = `${currentBlok}${no}`;
     document.getElementById('modalJudul').textContent = `${noRumah} — Pilih Tanggal Bayar`;
-    tglBayar.value = pembayaranRealtime[noRumah]?.tanggal || '';
-    modalBayar.classList.add('show');
+    document.getElementById('tglBayar').value = pembayaranRealtime[noRumah]?.tanggal || '';
+    document.getElementById('modalBayar').classList.add('show');
 }
 
-btnBatal.addEventListener('click', () => modalBayar.classList.remove('show'));
-
-btnSimpan.addEventListener('click', async () => {
-    if (!tglBayar.value) { alert('Silakan pilih tanggal!'); return; }
-    btnSimpan.disabled = true;
-    btnSimpan.textContent = "Menyimpan...";
-    await simpanKeFirebase(currentIndex.periode, currentBlok, currentIndex.no, tglBayar.value);
-    btnSimpan.disabled = false;
-    btnSimpan.textContent = "Simpan";
-    modalBayar.classList.remove('show');
+document.getElementById('btnBatal').addEventListener('click', () => {
+    document.getElementById('modalBayar').classList.remove('show');
 });
 
-btnHapus.addEventListener('click', async () => {
-    if (!confirm('Yakin hapus status pembayaran ini?')) return;
-    btnHapus.disabled = true;
-    btnHapus.textContent = "Menghapus...";
-    await simpanKeFirebase(currentIndex.periode, currentBlok, currentIndex.no, null);
-    btnHapus.disabled = false;
-    btnHapus.textContent = "Hapus Status Bayar";
-    modalBayar.classList.remove('show');
+document.getElementById('btnSimpan').addEventListener('click', async () => {
+    if (!document.getElementById('tglBayar').value) { alert('Pilih tanggal dulu!'); return; }
+    const btn = document.getElementById('btnSimpan');
+    btn.disabled = true; btn.textContent = "Menyimpan...";
+    await simpanKeFirebase(currentIndex.periode, currentBlok, currentIndex.no, document.getElementById('tglBayar').value);
+    btn.disabled = false; btn.textContent = "Simpan";
+    document.getElementById('modalBayar').classList.remove('show');
 });
 
-monthSelect.addEventListener('change', () => {
-    if (currentTab === 'rekap') tampilkanRekap();
-    else tampilkanGrid();
+document.getElementById('btnHapus').addEventListener('click', () => {
+    if (!confirm('Yakin hapus status ini?')) return;
+    tutupDanLanjut(null);
 });
 
-btnSelesai.addEventListener('click', () => {
-    if (currentTab === 'rekap') tampilkanRekap();
-    else tampilkanGrid();
+// ==========================================
+// 📋 RIWAYAT PERUBAHAN
+// ==========================================
+document.getElementById('btnLihatRiwayat').addEventListener('click', async () => {
+    document.getElementById('modalBayar').classList.remove('show');
+    const noRumah = `${currentBlok}${currentIndex.no}`;
+    document.getElementById('judulRiwayat').textContent = `Riwayat — ${noRumah}`;
+    document.getElementById('daftarRiwayat').innerHTML = '<div class="memuat">Memuat...</div>';
+    document.getElementById('modalRiwayat').classList.add('show');
+
+    const snapshot = await db.collection('iuran')
+        .where('periode', '==', currentIndex.periode)
+        .where('noRumah', '==', noRumah)
+        .orderBy('waktuDiubah', 'desc')
+        .limit(10)
+        .get();
+
+    if (snapshot.empty) {
+        document.getElementById('daftarRiwayat').innerHTML = '<p style="text-align:center; color:#888;">Belum ada riwayat perubahan</p>';
+        return;
+    }
+
+    let html = '';
+    snapshot.forEach(doc => {
+        const d = doc.data();
+        html += `
+        <div class="item-riwayat">
+            <div class="nama">${d.namaPengguna || d.diubahOleh || 'Tidak diketahui'}</div>
+            <div>Tanggal bayar: ${d.tanggal || '-'}</div>
+            <div class="waktu">${formatTanggal(d.waktuDiubah)}</div>
+        </div>`;
+    });
+    document.getElementById('daftarRiwayat').innerHTML = html;
 });
 
-function bukaKataSandi(tindakan) {
-    tindakanLulus = tindakan;
-    inputSandi.value = '';
-    modalSandi.classList.add('show');
+document.getElementById('btnTutupRiwayat').addEventListener('click', () => {
+    document.getElementById('modalRiwayat').classList.remove('show');
+});
+
+// ==========================================
+// KONFIRMASI KATA SANDI UNTUK RESET
+// ==========================================
+function tutupDanLanjut(aksi) {
+    tindakanLulus = aksi;
+    document.getElementById('inputSandiAksi').value = '';
+    document.getElementById('modalSandi').classList.add('show');
 }
 
-btnBatalSandi.addEventListener('click', () => {
-    modalSandi.classList.remove('show');
+document.getElementById('btnUrung').addEventListener('click', () => {
+    document.getElementById('teksKonfirmasi').textContent = `Yakin urungkan semua data Blok ${currentBlok}?`;
+    tutupDanLanjut('resetBlok');
+});
+
+document.getElementById('btnResetBulan').addEventListener('click', () => {
+    if (penggunaSaatIni.blok !== 'SEMUA') {
+        alert('❌ Hanya Admin yang boleh reset seluruh bulan!');
+        return;
+    }
+    document.getElementById('teksKonfirmasi').textContent = '⚠️ Hapus SEMUA data seluruh bulan ini?';
+    tutupDanLanjut('resetBulan');
+});
+
+document.getElementById('btnBatalAksi').addEventListener('click', () => {
+    document.getElementById('modalSandi').classList.remove('show');
     tindakanLulus = null;
 });
 
-btnKonfirmasi.addEventListener('click', () => {
-    if (inputSandi.value === KATA_SANDI) {
-        modalSandi.classList.remove('show');
-        lanjutkanTindakan();
-    } else {
-        alert('❌ Kata sandi salah! Coba lagi.');
-        inputSandi.value = '';
+document.getElementById('btnKonfirmasiAksi').addEventListener('click', async () => {
+    const sandi = document.getElementById('inputSandiAksi').value;
+    if (sandi !== penggunaSaatIni.sandi) {
+        alert('❌ Kata sandi salah!');
+        return;
     }
-});
-
-async function lanjutkanTindakan() {
-    if (!tindakanLulus) return;
-    const periode = monthSelect.value;
-    const namaPeriode = monthSelect.options[monthSelect.selectedIndex].text;
+    document.getElementById('modalSandi').classList.remove('show');
+    
+    const periode = document.getElementById('monthSelect').value;
+    const namaPeriode = document.getElementById('monthSelect').options[document.getElementById('monthSelect').selectedIndex].text;
 
     if (tindakanLulus === 'resetBlok') {
-        if (!confirm(`⚠️ Yakin URUNGKAN semua data Blok ${currentBlok} pada ${namaPeriode}?`)) return;
-        const snapshot = await db.collection('iuran')
+        if (!bolehUbahBlok(currentBlok)) { alert('❌ Bukan blok Anda!'); return; }
+        const snap = await db.collection('iuran')
             .where('periode', '==', periode)
             .where('blok', '==', currentBlok)
             .get();
-        const hapusSemua = [];
-        snapshot.forEach(doc => hapusSemua.push(doc.ref.delete()));
-        await Promise.all(hapusSemua);
-        alert(`✅ Blok ${currentBlok} sudah dikembalikan ke Belum Bayar`);
+        await Promise.all(snap.docs.map(d => d.ref.delete()));
+        alert(`✅ Blok ${currentBlok} dikosongkan`);
     }
 
     if (tindakanLulus === 'resetBulan') {
-        if (!confirm(`⚠️ PERINGATAN!\nHapus SEMUA data seluruh blok pada:\n📅 ${namaPeriode}?`)) return;
-        if (!confirm('Yakin BENAR-BENAR hapus SEMUA data bulan ini?')) return;
-        const snapshot = await db.collection('iuran').where('periode', '==', periode).get();
-        const hapusSemua = [];
-        snapshot.forEach(doc => hapusSemua.push(doc.ref.delete()));
-        await Promise.all(hapusSemua);
-        alert(`✅ Semua data pada ${namaPeriode} sudah dihapus`);
+        const snap = await db.collection('iuran').where('periode', '==', periode).get();
+        await Promise.all(snap.docs.map(d => d.ref.delete()));
+        alert(`✅ Semua data ${namaPeriode} dihapus`);
     }
     tindakanLulus = null;
-}
+});
 
-btnUrung.addEventListener('click', () => bukaKataSandi('resetBlok'));
-btnResetBulan.addEventListener('click', () => bukaKataSandi('resetBulan'));
+// Reload
+document.getElementById('btnReload').addEventListener('click', () => {
+    if (currentTab === 'rekap') tampilkanRekap();
+    else tampilkanGrid();
+    tampilkanNotifikasi('✅ Disegarkan', 'Data terbaru sudah dimuat');
+});
 
-isiPilihanBulan();
-tampilkanGrid();
+// Ganti bulan
+document.getElementById('monthSelect').addEventListener('change', () => {
+    if (currentTab === 'rekap') tampilkanRekap();
+    else tampilkanGrid();
+});
 </script>
 
 </body>
