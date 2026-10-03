@@ -18,15 +18,15 @@
         body { background: var(--latar); padding: 16px; max-width: 960px; margin: 0 auto; }
         .identitas {
             background: linear-gradient(135deg, var(--biru), #005fcc); color: #fff;
-            padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 16px;
+            padding: 24px 20px; border-radius: 16px; text-align: center; margin-bottom: 16px;
             box-shadow: 0 4px 12px rgba(0,122,255,0.2);
         }
-        .identitas h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
-        .identitas .alamat { font-size: 13px; opacity: 0.9; }
+        .identitas h1 { font-size: 22px; font-weight: 700; line-height: 1.4; margin-bottom: 10px; }
+        .identitas .alamat { font-size: 15px; line-height: 1.6; opacity: 0.95; }
         .status-sinkron {
-            font-size: 12px; margin-top: 6px; padding: 4px 10px; border-radius: 20px; display: inline-block;
+            font-size: 13px; margin-top: 14px; padding: 6px 14px; border-radius: 20px; display: inline-block;
         }
-        .status-sinkron.terhubung { background: #d1fae5; color: #065f46; }
+        .status-sinkron.terhubung { background: #d1fae5; color: #065f46; font-weight: 500; }
         .status-sinkron.terputus { background: #fee2e2; color: #991b1b; }
         .header {
             background: var(--putih); padding: 20px; border-radius: 16px;
@@ -115,14 +115,16 @@
             .box { padding: 14px 6px; min-height: 70px; }
             .box .id { font-size: 17px; }
             .box .date { font-size: 11px; }
+            .identitas h1 { font-size: 18px; }
+            .identitas .alamat { font-size: 13px; }
         }
     </style>
 </head>
 <body>
 
 <div class="identitas">
-    <h1>🏠 IURAN RUTIN PERUMAHAN PARADISE RESIDENCE 4</h1>
-    <p class="alamat">JL. HAJI UMAR - KAMPAK PANGKALPINANG</p>
+    <h1>IURAN RUTIN<br>PERUMAHAN PARADISE RESIDENCE 4</h1>
+    <p class="alamat">JL. HAJI UMAR<br>KAMPAK - PANGKALPINANG</p>
     <span class="status-sinkron" id="statusFirebase">🔄 Memuat...</span>
 </div>
 
