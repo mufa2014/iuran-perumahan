@@ -10,13 +10,11 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <!-- Library untuk PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
         
-        /* Tema Terang (Default) */
         :root {
             --hijau: #34c759; --merah: #ff3b30; --biru: #007aff; --oranye: #ff9500;
             --abu: #e5e5e7; --gelap: #1d1d1f; --putih: #ffffff; --latar: #f2f2f7;
@@ -24,7 +22,6 @@
             --bayangan: rgba(0,0,0,0.06);
         }
         
-        /* Tema Gelap */
         .mode-gelap {
             --abu: #2c2c2e; --gelap: #f5f5f7; --putih: #1c1c1e; --latar: #000000;
             --kartu: #1c1c1e; --teks: #f5f5f7; --batas: #38383a;
@@ -56,7 +53,6 @@
         .kelompok-kiri { display: flex; align-items: center; gap: 10px; }
         .info-petugas { font-size: 14px; font-weight: 500; padding: 6px 12px; background: var(--kartu); border-radius: 10px; }
         
-        /* TOMBOL MODE — KECIL SELEBAR TULISAN SAJA */
         .btn-mode { 
             background: var(--kartu); border: none; padding: 6px 10px; border-radius: 8px;
             cursor: pointer; font-size: 13px; box-shadow: 0 2px 6px var(--bayangan);
@@ -120,7 +116,6 @@
         .uang.besar { font-size: 19px; color: #0066cc; }
         .ket { font-size: 13px; color: #8e8e93; margin-top: 4px; }
         
-        /* Notifikasi */
         .notifikasi {
             position: fixed; top: 20px; right: 20px; background: var(--kartu);
             padding: 16px 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
@@ -131,7 +126,6 @@
         .notifikasi h4 { font-size: 14px; margin-bottom: 4px; color: var(--biru); }
         .notifikasi p { font-size: 13px; color: var(--teks); }
         
-        /* Riwayat */
         .daftar-riwayat { margin-top: 16px; max-height: 300px; overflow-y: auto; }
         .item-riwayat {
             padding: 10px; border-bottom: 1px solid var(--batas); font-size: 13px;
@@ -197,13 +191,11 @@
 </head>
 <body>
 
-<!-- Notifikasi -->
 <div class="notifikasi" id="kotakNotifikasi">
     <h4 id="notifJudul"></h4>
     <p id="notifIsi"></p>
 </div>
 
-<!-- Halaman Login -->
 <div class="halaman-login" id="halamanLogin">
     <div class="kotak-login">
         <h2>🔐 Masuk Sistem Iuran</h2>
@@ -216,7 +208,6 @@
     </div>
 </div>
 
-<!-- Halaman Utama -->
 <div id="halamanUtama" class="sembunyi">
     <div class="kontrol-atas">
         <div class="kelompok-kiri">
@@ -261,7 +252,7 @@
 
     <div class="tab-content active" id="kontenGrid">
         <div class="grid" id="gridContainer">
-            <div class="memuat">🔄 Memuat data dari server...</div>
+            <div class="memuat">🔄 Memuat data...</div>
         </div>
     </div>
 
@@ -323,9 +314,6 @@
 </div>
 
 <script>
-// ==========================================
-// KONFIGURASI & DATA
-// ==========================================
 const firebaseConfig = {
   apiKey: "AIzaSyBy6wCCaiUzTjkJ_NnnCwFSE7Ui0V2jUKE",
   authDomain: "iuran-perumahan.firebaseapp.com",
@@ -336,7 +324,6 @@ const firebaseConfig = {
   measurementId: "G-6Q3QCQZ39V"
 };
 
-// Data Petugas
 const DAFTAR_PETUGAS = {
     petugasA: { sandi: "1234A", nama: "Petugas Blok A", blok: "A" },
     petugasB: { sandi: "1234B", nama: "Petugas Blok B", blok: "B" },
@@ -347,11 +334,9 @@ const DAFTAR_PETUGAS = {
 
 const IURAN_PER_RUMAH = 10000;
 
-// Inisialisasi Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Status Global
 let penggunaSaatIni = null;
 let currentBlok = 'A';
 let currentTab = 'blok';
@@ -359,9 +344,7 @@ let currentIndex = null;
 let tindakanLulus = null;
 let pembayaranRealtime = {};
 let pendengarPerubahan = null;
-let daftarPerubahanDiketahui = new Set();
 
-// Elemen
 const halamanLogin = document.getElementById('halamanLogin');
 const halamanUtama = document.getElementById('halamanUtama');
 const infoPetugasEl = document.getElementById('infoPetugas');
@@ -369,9 +352,6 @@ const btnMode = document.getElementById('btnMode');
 const btnPDF = document.getElementById('btnPDF');
 const kotakNotifikasi = document.getElementById('kotakNotifikasi');
 
-// ==========================================
-// FUNGSI UMUM
-// ==========================================
 function formatRupiah(angka) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
 }
@@ -382,9 +362,6 @@ function formatTanggal(ts) {
     return d.toLocaleDateString('id-ID') + ' ' + d.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
 }
 
-// ==========================================
-// 🌙 MODE GELAP / TERANG
-// ==========================================
 function aturTema() {
     const gelap = localStorage.getItem('tema') === 'gelap';
     document.body.classList.toggle('mode-gelap', gelap);
@@ -398,9 +375,6 @@ btnMode.addEventListener('click', () => {
 });
 aturTema();
 
-// ==========================================
-// 🔐 LOGIN & LOGOUT
-// ==========================================
 document.getElementById('btnMasuk').addEventListener('click', () => {
     const pengguna = document.getElementById('inputPengguna').value.trim();
     const sandi = document.getElementById('inputSandiLogin').value;
@@ -417,7 +391,6 @@ document.getElementById('btnMasuk').addEventListener('click', () => {
     }
 });
 
-// Logout
 document.getElementById('btnLogout').addEventListener('click', () => {
     if (confirm('Yakin ingin keluar?')) {
         penggunaSaatIni = null;
@@ -429,9 +402,6 @@ document.getElementById('btnLogout').addEventListener('click', () => {
     }
 });
 
-// ==========================================
-// 🔔 NOTIFIKASI
-// ==========================================
 function tampilkanNotifikasi(judul, isi) {
     document.getElementById('notifJudul').textContent = judul;
     document.getElementById('notifIsi').textContent = isi;
@@ -439,9 +409,6 @@ function tampilkanNotifikasi(judul, isi) {
     setTimeout(() => kotakNotifikasi.classList.remove('tampil'), 4000);
 }
 
-// ==========================================
-// BAGIAN DATA & TAMPILAN
-// ==========================================
 function isiPilihanBulan() {
     const daftarBulan = [];
     const sekarang = new Date();
@@ -465,7 +432,6 @@ function bolehUbahBlok(blok) {
 
 function mulaiDengarPerubahan(periode, blok) {
     if (pendengarPerubahan) pendengarPerubahan();
-    daftarPerubahanDiketahui.clear();
 
     document.getElementById('statusFirebase').textContent = "🔄 Memuat...";
     document.getElementById('statusFirebase').className = "status-sinkron";
@@ -474,27 +440,13 @@ function mulaiDengarPerubahan(periode, blok) {
         .where('periode', '==', periode)
         .where('blok', '==', blok)
         .onSnapshot(snapshot => {
-            snapshot.docChanges().forEach(perubahan => {
-                const id = perubahan.doc.id;
-                if (daftarPerubahanDiketahui.has(id)) return;
-                daftarPerubahanDiketahui.add(id);
-                
-                const data = perubahan.doc.data();
-                if (perubahan.type === 'added') {
-                    tampilkanNotifikasi('✅ Pembayaran Dicatat', `${data.noRumah} — dibayar ${data.tanggal}\noleh ${data.namaPengguna?.split(' ')[0] || 'Seseorang'}`);
-                } else if (perubahan.type === 'removed') {
-                    tampilkanNotifikasi('↩️ Status Dihapus', `${data.noRumah} — dikembalikan ke Belum Bayar`);
-                }
-            });
-
             pembayaranRealtime = {};
             snapshot.forEach(doc => {
                 const d = doc.data();
                 pembayaranRealtime[d.noRumah] = {
                     tanggal: d.tanggal,
-                    diubahOleh: d.diubahOleh || 'Tidak diketahui',
-                    waktuDiubah: d.waktuDiubah,
-                    namaPengguna: d.namaPengguna || 'Tidak diketahui'
+                    namaPengguna: d.namaPengguna || 'Tidak diketahui',
+                    waktuDiubah: d.waktuDiubah
                 };
             });
 
@@ -589,9 +541,6 @@ async function tampilkanRekap() {
     document.getElementById('totalSemuaBlok').textContent = formatRupiah(totalSemua);
 }
 
-// ==========================================
-// 📄 EXPORT PDF — HANYA DI REKAP
-// ==========================================
 btnPDF.addEventListener('click', async () => {
     const btn = btnPDF;
     btn.textContent = "⏳ Membuat PDF..."; btn.disabled = true;
@@ -631,9 +580,6 @@ btnPDF.addEventListener('click', async () => {
     tampilkanNotifikasi('✅ PDF Berhasil', 'File rekapitulasi sudah terunduh');
 });
 
-// ==========================================
-// TAB & MODAL
-// ==========================================
 document.getElementById('tabs').addEventListener('click', e => {
     if (!e.target.classList.contains('tab')) return;
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -684,51 +630,61 @@ document.getElementById('btnSimpan').addEventListener('click', async () => {
 
 document.getElementById('btnHapus').addEventListener('click', () => {
     if (!confirm('Yakin hapus status ini?')) return;
-    tutupDanLanjut(null);
+    simpanKeFirebase(currentIndex.periode, currentBlok, currentIndex.no, null);
+    document.getElementById('modalBayar').classList.remove('show');
 });
 
-// ==========================================
-// 📋 RIWAYAT PERUBAHAN
-// ==========================================
+// === DIPERBAIKI: Riwayat Perubahan ===
 document.getElementById('btnLihatRiwayat').addEventListener('click', async () => {
     document.getElementById('modalBayar').classList.remove('show');
     const noRumah = `${currentBlok}${currentIndex.no}`;
+    const periode = currentIndex.periode;
+    
     document.getElementById('judulRiwayat').textContent = `Riwayat — ${noRumah}`;
     document.getElementById('daftarRiwayat').innerHTML = '<div class="memuat">Memuat...</div>';
     document.getElementById('modalRiwayat').classList.add('show');
 
-    const snapshot = await db.collection('iuran')
-        .where('periode', '==', currentIndex.periode)
-        .where('noRumah', '==', noRumah)
-        .orderBy('waktuDiubah', 'desc')
-        .limit(10)
-        .get();
+    try {
+        // Cari berdasarkan dokumen ID karena noRumah tidak selalu terurut
+        const snapshot = await db.collection('iuran')
+            .where('periode', '==', periode)
+            .where('noRumah', '==', noRumah)
+            .get();
 
-    if (snapshot.empty) {
-        document.getElementById('daftarRiwayat').innerHTML = '<p style="text-align:center; color:#888;">Belum ada riwayat perubahan</p>';
-        return;
+        if (snapshot.empty) {
+            document.getElementById('daftarRiwayat').innerHTML = `
+                <p style="text-align:center; color:#888; padding:20px;">
+                    Belum ada riwayat perubahan<br>
+                    Rumah ini belum dicatat pembayarannya
+                </p>`;
+            return;
+        }
+
+        let html = '';
+        snapshot.forEach(doc => {
+            const d = doc.data();
+            html += `
+            <div class="item-riwayat">
+                <div class="nama">${d.namaPengguna || d.diubahOleh || 'Tidak diketahui'}</div>
+                <div>Tanggal bayar: ${d.tanggal || '-'}</div>
+                <div class="waktu">${formatTanggal(d.waktuDiubah)}</div>
+            </div>`;
+        });
+        document.getElementById('daftarRiwayat').innerHTML = html;
+    } catch (err) {
+        console.error(err);
+        document.getElementById('daftarRiwayat').innerHTML = `
+            <p style="text-align:center; color:#ff3b30; padding:20px;">
+                ⚠️ Gagal memuat riwayat<br>
+                ${err.message}
+            </p>`;
     }
-
-    let html = '';
-    snapshot.forEach(doc => {
-        const d = doc.data();
-        html += `
-        <div class="item-riwayat">
-            <div class="nama">${d.namaPengguna || d.diubahOleh || 'Tidak diketahui'}</div>
-            <div>Tanggal bayar: ${d.tanggal || '-'}</div>
-            <div class="waktu">${formatTanggal(d.waktuDiubah)}</div>
-        </div>`;
-    });
-    document.getElementById('daftarRiwayat').innerHTML = html;
 });
 
 document.getElementById('btnTutupRiwayat').addEventListener('click', () => {
     document.getElementById('modalRiwayat').classList.remove('show');
 });
 
-// ==========================================
-// KONFIRMASI KATA SANDI UNTUK RESET
-// ==========================================
 function tutupDanLanjut(aksi) {
     tindakanLulus = aksi;
     document.getElementById('inputSandiAksi').value = '';
@@ -782,14 +738,12 @@ document.getElementById('btnKonfirmasiAksi').addEventListener('click', async () 
     tindakanLulus = null;
 });
 
-// Reload
 document.getElementById('btnReload').addEventListener('click', () => {
     if (currentTab === 'rekap') tampilkanRekap();
     else tampilkanGrid();
     tampilkanNotifikasi('✅ Disegarkan', 'Data terbaru sudah dimuat');
 });
 
-// Ganti bulan
 document.getElementById('monthSelect').addEventListener('change', () => {
     if (currentTab === 'rekap') tampilkanRekap();
     else tampilkanGrid();
