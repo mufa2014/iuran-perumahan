@@ -139,6 +139,7 @@
             max-width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
         .modal-content h3 { margin-bottom: 16px; font-size: 17px; font-weight: 600; text-align: center; }
+        .modal-content p { text-align: center; margin-bottom: 16px; font-size: 14px; line-height: 1.5; }
         input {
             width: 100%; padding: 12px; margin-bottom: 14px;
             border: 1px solid var(--batas); border-radius: 10px; font-size: 15px;
@@ -304,6 +305,18 @@
             </div>
         </div>
     </div>
+
+    <!-- MODAL KONFIRMASI PDF -->
+    <div class="modal" id="modalKonfirmasiPDF">
+        <div class="modal-content">
+            <h3>📄 Konfirmasi Export PDF</h3>
+            <p>Buat unduhan laporan rekapitulasi iuran bulan ini?</p>
+            <div class="btn-group">
+                <button class="btn-cancel" id="btnBatalPDF">Batal</button>
+                <button class="btn-save" id="btnKonfirmasiPDF">Ya, Export</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -334,7 +347,6 @@ let penggunaSaatIni = null;
 let currentBlok = 'A';
 let currentTab = 'blok';
 let currentIndex = null;
-let tindakanLulus = null;
 let pembayaranRealtime = {};
 let pendengarPerubahan = null;
 
@@ -507,9 +519,25 @@ async function tampilkanRekap() {
     document.getElementById('totalSemuaBlok').textContent = formatRupiah(totalSemua);
 }
 
-btnPDF.addEventListener('click', async () => {
+// === KONFIRMASI SEBELUM EXPORT PDF ===
+let sedangProsesPDF = false;
+btnPDF.addEventListener('click', () => {
+    if (sedangProsesPDF) return;
+    // Tampilkan konfirmasi
+    document.getElementById('modalKonfirmasiPDF').classList.add('show');
+});
+
+document.getElementById('btnBatalPDF').addEventListener('click', () => {
+    document.getElementById('modalKonfirmasiPDF').classList.remove('show');
+});
+
+document.getElementById('btnKonfirmasiPDF').addEventListener('click', async () => {
+    document.getElementById('modalKonfirmasiPDF').classList.remove('show');
+    sedangProsesPDF = true;
+    
     const btn = btnPDF;
     btn.textContent = "⏳ Membuat..."; btn.disabled = true;
+    
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     doc.setFontSize(17);
@@ -531,7 +559,9 @@ btnPDF.addEventListener('click', async () => {
     doc.text("Dicetak: " + penggunaSaatIni.nama, 20, y+25);
     doc.text(new Date().toLocaleString('id-ID'), 190, y+25, { align: 'right' });
     doc.save(`IURAN-${document.getElementById('monthSelect').value}.pdf`);
+    
     btn.textContent = "📄 Export PDF"; btn.disabled = false;
+    sedangProsesPDF = false;
     tampilkanNotifikasi('✅ Selesai', 'PDF sudah terunduh');
 });
 
@@ -580,7 +610,7 @@ document.getElementById('btnHapus').addEventListener('click', () => {
     document.getElementById('modalBayar').classList.remove('show');
 });
 
-// === RIWAYAT — DIPERBAIKI & DIPASTIKAN STABIL ===
+// RIWAYAT
 document.getElementById('btnLihatRiwayat').addEventListener('click', async () => {
     document.getElementById('modalBayar').classList.remove('show');
     const noRumah = `${currentBlok}${currentIndex.no}`;
@@ -592,7 +622,6 @@ document.getElementById('btnLihatRiwayat').addEventListener('click', async () =>
     document.getElementById('modalRiwayat').classList.add('show');
 
     try {
-        // Ambil SEMUA dokumen periode ini, lalu saring — PALING AMAN
         const snapshot = await db.collection('iuran')
             .where('periode', '==', periode)
             .get();
@@ -600,7 +629,6 @@ document.getElementById('btnLihatRiwayat').addEventListener('click', async () =>
         const hasil = [];
         snapshot.forEach(doc => {
             const d = doc.data();
-            // Cocokkan dengan format yang ada
             if (d.noRumah === noRumah || d.noRumah === `${currentBlok}${currentIndex.no}`) {
                 hasil.push(d);
             }
@@ -615,7 +643,6 @@ document.getElementById('btnLihatRiwayat').addEventListener('click', async () =>
             return;
         }
 
-        // Urutkan dari yang TERBARU
         hasil.sort((a, b) => {
             const ta = a.waktuDiubah?.toDate ? a.waktuDiubah.toDate() : new Date(0);
             const tb = b.waktuDiubah?.toDate ? b.waktuDiubah.toDate() : new Date(0);
@@ -646,40 +673,28 @@ document.getElementById('btnTutupRiwayat').addEventListener('click', () => {
     document.getElementById('modalRiwayat').classList.remove('show');
 });
 
-function tutupDanLanjut(aksi) {
-    tindakanLulus = aksi;
-    document.getElementById('inputSandiAksi').value = '';
-    document.getElementById('modalSandi').classList.add('show');
-}
 document.getElementById('btnUrung').addEventListener('click', () => {
-    document.getElementById('teksKonfirmasi').textContent = `Yakin urungkan semua Blok ${currentBlok}?`;
-    tutupDanLanjut('resetBlok');
+    if (!confirm(`Yakin urungkan semua Blok ${currentBlok}?`)) return;
+    if (!bolehUbahBlok(currentBlok)) { alert('❌ Bukan blok Anda!'); return; }
+    if (prompt('Masukkan kata sandi untuk konfirmasi:') !== penggunaSaatIni.sandi) {
+        alert('❌ Kata sandi salah!'); return;
+    }
+    const periode = document.getElementById('monthSelect').value;
+    const snap = await db.collection('iuran').where('periode','==',periode).where('blok','==',currentBlok).get();
+    await Promise.all(snap.docs.map(d => d.ref.delete()));
+    alert(`✅ Blok ${currentBlok} dikosongkan`);
 });
+
 document.getElementById('btnResetBulan').addEventListener('click', () => {
     if (penggunaSaatIni.blok !== 'SEMUA') { alert('❌ Hanya Admin!'); return; }
-    document.getElementById('teksKonfirmasi').textContent = '⚠️ Hapus SEMUA data bulan ini?';
-    tutupDanLanjut('resetBulan');
-});
-document.getElementById('btnBatalAksi').addEventListener('click', () => {
-    document.getElementById('modalSandi').classList.remove('show');
-    tindakanLulus = null;
-});
-document.getElementById('btnKonfirmasiAksi').addEventListener('click', async () => {
-    if (document.getElementById('inputSandiAksi').value !== penggunaSaatIni.sandi) { alert('❌ Kata sandi salah!'); return; }
-    document.getElementById('modalSandi').classList.remove('show');
+    if (!confirm('⚠️ Yakin HAPUS SEMUA data bulan ini?')) return;
+    if (prompt('Masukkan kata sandi Admin:') !== penggunaSaatIni.sandi) {
+        alert('❌ Kata sandi salah!'); return;
+    }
     const periode = document.getElementById('monthSelect').value;
-    if (tindakanLulus === 'resetBlok') {
-        if (!bolehUbahBlok(currentBlok)) { alert('❌ Bukan blok Anda!'); return; }
-        const snap = await db.collection('iuran').where('periode','==',periode).where('blok','==',currentBlok).get();
-        await Promise.all(snap.docs.map(d => d.ref.delete()));
-        alert(`✅ Blok ${currentBlok} dikosongkan`);
-    }
-    if (tindakanLulus === 'resetBulan') {
-        const snap = await db.collection('iuran').where('periode','==',periode).get();
-        await Promise.all(snap.docs.map(d => d.ref.delete()));
-        alert(`✅ Semua data dihapus`);
-    }
-    tindakanLulus = null;
+    const snap = await db.collection('iuran').where('periode','==',periode).get();
+    await Promise.all(snap.docs.map(d => d.ref.delete()));
+    alert(`✅ Semua data dihapus`);
 });
 
 document.getElementById('btnReload').addEventListener('click', () => {
