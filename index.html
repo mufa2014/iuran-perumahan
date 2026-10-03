@@ -306,7 +306,6 @@
         </div>
     </div>
 
-    <!-- MODAL KONFIRMASI PDF -->
     <div class="modal" id="modalKonfirmasiPDF">
         <div class="modal-content">
             <h3>📄 Konfirmasi Export PDF</h3>
@@ -349,6 +348,7 @@ let currentTab = 'blok';
 let currentIndex = null;
 let pembayaranRealtime = {};
 let pendengarPerubahan = null;
+let sedangProsesPDF = false;
 
 const halamanLogin = document.getElementById('halamanLogin');
 const halamanUtama = document.getElementById('halamanUtama');
@@ -519,11 +519,9 @@ async function tampilkanRekap() {
     document.getElementById('totalSemuaBlok').textContent = formatRupiah(totalSemua);
 }
 
-// === KONFIRMASI SEBELUM EXPORT PDF ===
-let sedangProsesPDF = false;
+// === KONFIRMASI PDF ===
 btnPDF.addEventListener('click', () => {
     if (sedangProsesPDF) return;
-    // Tampilkan konfirmasi
     document.getElementById('modalKonfirmasiPDF').classList.add('show');
 });
 
@@ -629,17 +627,13 @@ document.getElementById('btnLihatRiwayat').addEventListener('click', async () =>
         const hasil = [];
         snapshot.forEach(doc => {
             const d = doc.data();
-            if (d.noRumah === noRumah || d.noRumah === `${currentBlok}${currentIndex.no}`) {
+            if (d.noRumah === noRumah) {
                 hasil.push(d);
             }
         });
 
         if (hasil.length === 0) {
-            wadah.innerHTML = `
-                <p style="text-align:center; color:#888; padding:30px 15px;">
-                    Rumah ini belum ada riwayat<br>
-                    Belum pernah dicatat pembayarannya
-                </p>`;
+            wadah.innerHTML = `<p style="text-align:center; color:#888; padding:30px 15px;">Rumah ini belum ada riwayat</p>`;
             return;
         }
 
@@ -651,8 +645,7 @@ document.getElementById('btnLihatRiwayat').addEventListener('click', async () =>
 
         let html = '';
         hasil.forEach(d => {
-            html += `
-            <div class="item-riwayat">
+            html += `<div class="item-riwayat">
                 <div class="nama">${d.namaPengguna || d.diubahOleh || 'Tidak diketahui'}</div>
                 <div>Tanggal bayar: ${d.tanggal || '-'}</div>
                 <div class="waktu">Diubah: ${formatTanggal(d.waktuDiubah)}</div>
@@ -661,11 +654,7 @@ document.getElementById('btnLihatRiwayat').addEventListener('click', async () =>
         wadah.innerHTML = html;
     } catch (err) {
         console.error('Error riwayat:', err);
-        wadah.innerHTML = `
-            <p style="text-align:center; color:#ff3b30; padding:30px 15px;">
-                ⚠️ Gagal memuat riwayat<br>
-                ${err.message}
-            </p>`;
+        wadah.innerHTML = `<p style="text-align:center; color:#ff3b30; padding:30px 15px;">⚠️ Gagal memuat riwayat</p>`;
     }
 });
 
@@ -673,34 +662,60 @@ document.getElementById('btnTutupRiwayat').addEventListener('click', () => {
     document.getElementById('modalRiwayat').classList.remove('show');
 });
 
+// === KONFIRMASI KATA SANDI UNTUK URUNG & RESET ===
+let tindakanLulus = null;
+
+function tutupDanLanjut(aksi, teks) {
+    tindakanLulus = aksi;
+    document.getElementById('teksKonfirmasi').textContent = teks;
+    document.getElementById('inputSandiAksi').value = '';
+    document.getElementById('modalSandi').classList.add('show');
+}
+
 document.getElementById('btnUrung').addEventListener('click', () => {
-    if (!confirm(`Yakin urungkan semua Blok ${currentBlok}?`)) return;
-    if (!bolehUbahBlok(currentBlok)) { alert('❌ Bukan blok Anda!'); return; }
-    if (prompt('Masukkan kata sandi untuk konfirmasi:') !== penggunaSaatIni.sandi) {
-        alert('❌ Kata sandi salah!'); return;
-    }
-    const periode = document.getElementById('monthSelect').value;
-    const snap = await db.collection('iuran').where('periode','==',periode).where('blok','==',currentBlok).get();
-    await Promise.all(snap.docs.map(d => d.ref.delete()));
-    alert(`✅ Blok ${currentBlok} dikosongkan`);
+    tutupDanLanjut('resetBlok', `Yakin urungkan semua Blok ${currentBlok}?`);
 });
 
 document.getElementById('btnResetBulan').addEventListener('click', () => {
     if (penggunaSaatIni.blok !== 'SEMUA') { alert('❌ Hanya Admin!'); return; }
-    if (!confirm('⚠️ Yakin HAPUS SEMUA data bulan ini?')) return;
-    if (prompt('Masukkan kata sandi Admin:') !== penggunaSaatIni.sandi) {
-        alert('❌ Kata sandi salah!'); return;
+    tutupDanLanjut('resetBulan', '⚠️ Hapus SEMUA data bulan ini?');
+});
+
+document.getElementById('btnBatalAksi').addEventListener('click', () => {
+    document.getElementById('modalSandi').classList.remove('show');
+    tindakanLulus = null;
+});
+
+document.getElementById('btnKonfirmasiAksi').addEventListener('click', async () => {
+    if (document.getElementById('inputSandiAksi').value !== penggunaSaatIni.sandi) { 
+        alert('❌ Kata sandi salah!'); 
+        return; 
     }
+    document.getElementById('modalSandi').classList.remove('show');
+    
     const periode = document.getElementById('monthSelect').value;
-    const snap = await db.collection('iuran').where('periode','==',periode).get();
-    await Promise.all(snap.docs.map(d => d.ref.delete()));
-    alert(`✅ Semua data dihapus`);
+    
+    if (tindakanLulus === 'resetBlok') {
+        if (!bolehUbahBlok(currentBlok)) { alert('❌ Bukan blok Anda!'); return; }
+        const snap = await db.collection('iuran').where('periode','==',periode).where('blok','==',currentBlok).get();
+        await Promise.all(snap.docs.map(d => d.ref.delete()));
+        alert(`✅ Blok ${currentBlok} dikosongkan`);
+    }
+    
+    if (tindakanLulus === 'resetBulan') {
+        const snap = await db.collection('iuran').where('periode','==',periode).get();
+        await Promise.all(snap.docs.map(d => d.ref.delete()));
+        alert(`✅ Semua data dihapus`);
+    }
+    
+    tindakanLulus = null;
 });
 
 document.getElementById('btnReload').addEventListener('click', () => {
     currentTab === 'rekap' ? tampilkanRekap() : tampilkanGrid();
     tampilkanNotifikasi('✅ Disegarkan', 'Data terbaru dimuat');
 });
+
 document.getElementById('monthSelect').addEventListener('change', () => {
     currentTab === 'rekap' ? tampilkanRekap() : tampilkanGrid();
 });
