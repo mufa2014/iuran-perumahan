@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iuran Perumahan Paradise Residence 4</title>
     
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    
-    <!-- Library untuk PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
@@ -36,103 +33,101 @@
         
         .identitas {
             background: linear-gradient(135deg, var(--biru), #005fcc); color: #fff;
-            padding: 24px 20px; border-radius: 16px; text-align: center; margin-bottom: 16px;
+            padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 16px;
             box-shadow: 0 4px 12px rgba(0,122,255,0.2);
         }
-        .identitas h1 { font-size: 22px; font-weight: 700; line-height: 1.4; margin-bottom: 10px; }
-        .identitas .alamat { font-size: 15px; line-height: 1.6; opacity: 0.95; }
+        .identitas h1 { font-size: 20px; font-weight: 700; line-height: 1.3; margin-bottom: 6px; }
+        .identitas .alamat { font-size: 14px; opacity: 0.95; }
         .status-sinkron {
-            font-size: 13px; margin-top: 14px; padding: 6px 14px; border-radius: 20px; display: inline-block;
+            font-size: 12px; margin-top: 10px; padding: 5px 12px; border-radius: 20px; display: inline-block;
         }
         .status-sinkron.terhubung { background: #d1fae5; color: #065f46; font-weight: 500; }
         .status-sinkron.terputus { background: #fee2e2; color: #991b1b; }
-        .kontrol-atas { 
+        
+        .baris-atas { 
             display: flex; justify-content: space-between; align-items: center; 
             margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
         }
-        .kelompok-kiri { display: flex; align-items: center; gap: 10px; }
-        .info-petugas { font-size: 14px; font-weight: 500; padding: 6px 12px; background: var(--kartu); border-radius: 10px; }
+        .kelompok-kiri { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .info-petugas { font-size: 13px; font-weight: 500; padding: 6px 12px; background: var(--kartu); border-radius: 10px; }
         
-        .btn-mode { 
-            background: var(--kartu); border: none; padding: 6px 10px; border-radius: 8px;
+        .btn-mode, .btn-reload, .btn-logout { 
+            background: var(--kartu); border: none; padding: 6px 12px; border-radius: 8px;
             cursor: pointer; font-size: 13px; box-shadow: 0 2px 6px var(--bayangan);
             width: auto; display: inline-flex; align-items: center; gap: 4px;
+            white-space: nowrap;
         }
-        .btn-logout { 
-            background: var(--merah); color: #fff; border: none; padding: 6px 12px; 
-            border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 500;
-        }
+        .btn-logout { background: var(--merah); color: #fff; }
+        .btn-reload { background: var(--biru); color: #fff; }
         
         .header {
-            background: var(--kartu); padding: 20px; border-radius: 16px;
+            background: var(--kartu); padding: 16px; border-radius: 16px;
             box-shadow: 0 2px 12px var(--bayangan); margin-bottom: 16px;
         }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
         select {
-            padding: 10px 14px; border-radius: 10px; border: 1px solid var(--batas);
-            font-size: 15px; background: var(--kartu); color: var(--teks); min-width: 180px;
+            padding: 8px 12px; border-radius: 10px; border: 1px solid var(--batas);
+            font-size: 14px; background: var(--kartu); color: var(--teks); min-width: 160px;
         }
-        .legend { display: flex; gap: 20px; font-size: 14px; flex-wrap: wrap; }
-        .legend span { display: flex; align-items: center; gap: 6px; }
+        .legend { display: flex; gap: 16px; font-size: 13px; flex-wrap: wrap; }
+        .legend span { display: flex; align-items: center; gap: 5px; }
         .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
         .dot.paid { background: var(--hijau); }
         .dot.unpaid { background: var(--merah); }
-        .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
         .tab {
-            padding: 12px 20px; border-radius: 12px 12px 0 0; background: var(--abu);
-            border: none; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s ease;
+            padding: 10px 16px; border-radius: 12px 12px 0 0; background: var(--abu);
+            border: none; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.2s;
             color: var(--teks);
         }
         .tab:hover { opacity: 0.8; }
         .tab.active { background: var(--kartu); box-shadow: 0 -3px 0 var(--biru); color: var(--biru); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
         .box {
-            background: var(--kartu); border-radius: 12px; padding: 18px 10px; text-align: center;
-            cursor: pointer; border: 2px solid transparent; transition: all 0.25s ease;
-            box-shadow: 0 2px 6px var(--bayangan); min-height: 80px;
+            background: var(--kartu); border-radius: 12px; padding: 14px 8px; text-align: center;
+            cursor: pointer; border: 2px solid transparent; transition: all 0.25s;
+            box-shadow: 0 2px 6px var(--bayangan); min-height: 75px;
         }
-        .box:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+        .box:active { transform: scale(0.97); }
         .box.unpaid { background: rgba(255,59,48,0.08); border-color: var(--merah); }
         .box.paid { background: rgba(52,199,89,0.08); border-color: var(--hijau); }
-        .box .id { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
-        .box .date { font-size: 13px; color: #8e8e93; }
+        .box .id { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+        .box .date { font-size: 11px; color: #8e8e93; }
         .rekap-card {
-            background: var(--kartu); border-radius: 16px; padding: 24px;
+            background: var(--kartu); border-radius: 16px; padding: 20px;
             box-shadow: 0 2px 12px var(--bayangan);
         }
-        .rekap-card h2 { font-size: 18px; margin-bottom: 20px; }
+        .rekap-card h2 { font-size: 17px; margin-bottom: 16px; }
         .rekap-baris {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 14px 0; border-bottom: 1px solid var(--batas); font-size: 15px;
+            padding: 12px 0; border-bottom: 1px solid var(--batas); font-size: 14px;
         }
         .rekap-baris:last-child { border-bottom: none; }
         .rekap-baris.total {
-            font-weight: 700; font-size: 17px; border-top: 2px solid var(--biru);
-            padding-top: 16px; margin-top: 8px;
+            font-weight: 700; font-size: 16px; border-top: 2px solid var(--biru);
+            padding-top: 12px; margin-top: 4px;
         }
         .uang { font-weight: 600; color: var(--biru); }
-        .uang.besar { font-size: 19px; color: #0066cc; }
-        .ket { font-size: 13px; color: #8e8e93; margin-top: 4px; }
+        .uang.besar { font-size: 18px; color: #0066cc; }
+        .ket { font-size: 12px; color: #8e8e93; margin-top: 4px; margin-bottom: 12px; }
         
         .notifikasi {
-            position: fixed; top: 20px; right: 20px; background: var(--kartu);
-            padding: 16px 20px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            z-index: 9999; transform: translateX(120%); transition: transform 0.3s ease;
-            max-width: 300px;
+            position: fixed; top: 15px; right: 15px; background: var(--kartu);
+            padding: 12px 16px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 9999; transform: translateX(120%); transition: transform 0.3s;
+            max-width: 280px; font-size: 13px;
         }
         .notifikasi.tampil { transform: translateX(0); }
-        .notifikasi h4 { font-size: 14px; margin-bottom: 4px; color: var(--biru); }
-        .notifikasi p { font-size: 13px; color: var(--teks); }
         
-        .daftar-riwayat { margin-top: 16px; max-height: 300px; overflow-y: auto; }
+        .daftar-riwayat { margin-top: 12px; max-height: 250px; overflow-y: auto; }
         .item-riwayat {
-            padding: 10px; border-bottom: 1px solid var(--batas); font-size: 13px;
+            padding: 12px; border-bottom: 1px solid var(--batas); font-size: 14px;
         }
         .item-riwayat:last-child { border-bottom: none; }
-        .item-riwayat .waktu { color: #888; font-size: 12px; }
-        .item-riwayat .nama { font-weight: 600; }
+        .item-riwayat .waktu { color: #888; font-size: 12px; margin-top: 4px; }
+        .item-riwayat .nama { font-weight: 600; margin-bottom: 2px; }
         
         .modal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none;
@@ -140,59 +135,57 @@
         }
         .modal.show { display: flex; }
         .modal-content {
-            background: var(--kartu); padding: 28px; border-radius: 20px; width: 100%;
+            background: var(--kartu); padding: 24px; border-radius: 20px; width: 100%;
             max-width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
-        .modal-content h3 { margin-bottom: 20px; font-size: 17px; font-weight: 600; }
+        .modal-content h3 { margin-bottom: 16px; font-size: 17px; font-weight: 600; text-align: center; }
         input {
-            width: 100%; padding: 12px; margin-bottom: 16px;
-            border: 1px solid var(--batas); border-radius: 10px; font-size: 16px;
+            width: 100%; padding: 12px; margin-bottom: 14px;
+            border: 1px solid var(--batas); border-radius: 10px; font-size: 15px;
             background: var(--putih); color: var(--teks);
         }
         .btn-group { display: flex; gap: 10px; }
         button {
-            flex: 1; padding: 12px; border: none; border-radius: 10px;
-            font-size: 15px; cursor: pointer; font-weight: 600; transition: all 0.2s;
+            flex: 1; padding: 11px; border: none; border-radius: 10px;
+            font-size: 14px; cursor: pointer; font-weight: 600; transition: all 0.2s;
         }
         .btn-cancel { background: var(--abu); color: var(--teks); }
         .btn-save { background: var(--biru); color: #fff; }
         .btn-delete { background: var(--merah); color: #fff; margin-top: 10px; width: 100%; }
         .btn-pass-ok { background: var(--biru); color: #fff; margin-top: 8px; width: 100%; }
         .btn-riwayat { background: var(--abu); color: var(--teks); margin-top: 10px; width: 100%; }
-        .footer { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; }
-        .footer button { flex: 1; min-width: 140px; }
-        #btnReload { background: var(--biru); color: #fff; }
+        .bawah-tombol { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .bawah-tombol button { flex: 1; min-width: 120px; }
         #btnPDF { background: var(--hijau); color: #fff; display: none; }
         #btnPDF.tampil { display: block; }
         .btn-reset-blok { background: var(--oranye); color: #fff; }
         .btn-reset-bulan { background: var(--merah); color: #fff; }
-        .stat-bar { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--batas); flex-wrap: wrap; }
-        .stat-item { font-size: 14px; }
+        .stat-bar { display: flex; gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--batas); flex-wrap: wrap; font-size: 13px; }
         .stat-item b { color: var(--biru); }
-        .memuat { text-align: center; padding: 30px; color: #888; }
+        .memuat { text-align: center; padding: 30px; color: #888; font-size: 14px; }
         .halaman-login {
             display: flex; align-items: center; justify-content: center; min-height: 80vh;
         }
         .kotak-login {
-            background: var(--kartu); padding: 32px; border-radius: 20px; box-shadow: 0 4px 20px var(--bayangan);
-            width: 100%; max-width: 360px; text-align: center;
+            background: var(--kartu); padding: 28px; border-radius: 20px; box-shadow: 0 4px 20px var(--bayangan);
+            width: 100%; max-width: 340px; text-align: center;
         }
-        .kotak-login h2 { margin-bottom: 24px; }
+        .kotak-login h2 { margin-bottom: 20px; font-size: 18px; }
         .sembunyi { display: none !important; }
         
-        @media (max-width: 480px) {
+        @media (max-width: 400px) {
             .grid { gap: 8px; }
-            .box { padding: 14px 6px; min-height: 70px; }
-            .box .id { font-size: 17px; }
-            .identitas h1 { font-size: 18px; }
-            .footer button { min-width: 100px; font-size: 13px; }
+            .box { padding: 12px 4px; min-height: 65px; }
+            .box .id { font-size: 16px; }
+            .tabs { gap: 4px; }
+            .tab { padding: 8px 12px; font-size: 12px; }
         }
     </style>
 </head>
 <body>
 
 <div class="notifikasi" id="kotakNotifikasi">
-    <h4 id="notifJudul"></h4>
+    <h4 id="notifJudul" style="font-size:13px; margin-bottom:2px;"></h4>
     <p id="notifIsi"></p>
 </div>
 
@@ -202,35 +195,36 @@
         <input type="text" id="inputPengguna" placeholder="Nama Pengguna">
         <input type="password" id="inputSandiLogin" placeholder="Kata Sandi">
         <button class="btn-save" id="btnMasuk">Masuk</button>
-        <p style="margin-top: 16px; font-size: 12px; color: #888;">
+        <p style="margin-top: 14px; font-size: 12px; color: #888; line-height:1.5;">
             Petugas A/B/C/D → 1234 + Huruf<br>Admin: 12345
         </p>
     </div>
 </div>
 
 <div id="halamanUtama" class="sembunyi">
-    <div class="kontrol-atas">
+    <div class="baris-atas">
         <div class="kelompok-kiri">
             <span class="info-petugas" id="infoPetugas"></span>
             <button class="btn-mode" id="btnMode">🌙 Gelap</button>
+            <button class="btn-reload" id="btnReload">🔄 Segarkan</button>
         </div>
-        <button class="btn-logout" id="btnLogout">🚪 Keluar</button>
+        <button class="btn-logout" id="btnLogout">Keluar</button>
     </div>
 
     <div class="identitas">
         <h1>IURAN RUTIN<br>PERUMAHAN PARADISE RESIDENCE 4</h1>
-        <p class="alamat">JL. HAJI UMAR<br>KAMPAK - PANGKALPINANG</p>
+        <p class="alamat">JL. HAJI UMAR — KAMPAK - PANGKALPINANG</p>
         <span class="status-sinkron" id="statusFirebase">🔄 Memuat...</span>
     </div>
 
     <div class="header">
         <div class="top-bar">
-            <label>Periode Bulan:
+            <label style="font-size:14px;">Periode:
                 <select id="monthSelect"></select>
             </label>
             <div class="legend">
-                <span><span class="dot paid"></span> Sudah Bayar</span>
-                <span><span class="dot unpaid"></span> Belum Bayar</span>
+                <span><span class="dot paid"></span> Sudah</span>
+                <span><span class="dot unpaid"></span> Belum</span>
             </div>
         </div>
 
@@ -239,13 +233,13 @@
             <button class="tab" data-tab="blok" data-blok="B">Blok B</button>
             <button class="tab" data-tab="blok" data-blok="C">Blok C</button>
             <button class="tab" data-tab="blok" data-blok="D">Blok D</button>
-            <button class="tab" data-tab="rekap">📊 Rekapitulasi</button>
+            <button class="tab" data-tab="rekap">📊 Rekap</button>
         </div>
 
         <div class="tab-content active" id="kontenBlok">
             <div class="stat-bar">
-                <div class="stat-item">Sudah bayar: <b id="jmlSudah">0</b> / 50</div>
-                <div class="stat-item">Belum bayar: <b id="jmlBelum">0</b> / 50</div>
+                <div class="stat-item">Sudah: <b id="jmlSudah">0</b>/50</div>
+                <div class="stat-item">Belum: <b id="jmlBelum">0</b>/50</div>
             </div>
         </div>
     </div>
@@ -257,17 +251,23 @@
     </div>
 
     <div class="tab-content" id="kontenRekap">
-        <div class="rekap-card" id="bagianRekap">
-            <h2>📊 Rekapitulasi Iuran — <span id="namaBulan"></span></h2>
+        <div class="rekap-card">
+            <h2>📊 Rekapitulasi — <span id="namaBulan"></span></h2>
             <p class="ket">Iuran per rumah: <strong>Rp 10.000</strong></p>
             <div id="rekapPerBlok">
-                <div class="memuat">🔄 Memuat rekapitulasi...</div>
+                <div class="memuat">Memuat rekap...</div>
             </div>
             <div class="rekap-baris total">
-                <span>💰 TOTAL SELURUH BLOK</span>
+                <span>💰 TOTAL SEMUA</span>
                 <span class="uang besar" id="totalSemuaBlok">Rp 0</span>
             </div>
         </div>
+    </div>
+
+    <div class="bawah-tombol">
+        <button id="btnPDF">📄 Export PDF</button>
+        <button id="btnUrung" class="btn-reset-blok">⚠️ Urung Blok</button>
+        <button id="btnResetBulan" class="btn-reset-bulan">🗑️ Reset Bulan</button>
     </div>
 
     <div class="modal" id="modalBayar">
@@ -279,37 +279,30 @@
                 <button class="btn-save" id="btnSimpan">Simpan</button>
             </div>
             <button class="btn-delete" id="btnHapus">Hapus Status Bayar</button>
-            <button class="btn-riwayat" id="btnLihatRiwayat">📋 Lihat Riwayat Perubahan</button>
+            <button class="btn-riwayat" id="btnLihatRiwayat">📋 Lihat Riwayat</button>
         </div>
     </div>
 
     <div class="modal" id="modalRiwayat">
-        <div class="modal-content" style="max-width: 380px;">
+        <div class="modal-content">
             <h3 id="judulRiwayat">Riwayat Perubahan</h3>
             <div class="daftar-riwayat" id="daftarRiwayat">
                 <div class="memuat">Memuat...</div>
             </div>
-            <button class="btn-cancel" style="margin-top: 16px;" id="btnTutupRiwayat">Tutup</button>
+            <button class="btn-cancel" style="margin-top: 14px; width:100%;" id="btnTutupRiwayat">Tutup</button>
         </div>
     </div>
 
     <div class="modal" id="modalSandi">
         <div class="modal-content">
-            <h3>🔐 Konfirmasi Aksi</h3>
-            <p style="font-size: 14px; margin-bottom: 12px;" id="teksKonfirmasi"></p>
-            <input type="password" id="inputSandiAksi" placeholder="Kata sandi Anda">
+            <h3>🔐 Konfirmasi</h3>
+            <p style="font-size: 14px; margin-bottom: 12px; text-align:center;" id="teksKonfirmasi"></p>
+            <input type="password" id="inputSandiAksi" placeholder="Kata sandi">
             <div class="btn-group">
                 <button class="btn-cancel" id="btnBatalAksi">Batal</button>
                 <button class="btn-pass-ok" id="btnKonfirmasiAksi">Lanjutkan</button>
             </div>
         </div>
-    </div>
-
-    <div class="footer">
-        <button id="btnReload">🔄 Segarkan</button>
-        <button id="btnPDF">📄 Export PDF</button>
-        <button id="btnUrung" class="btn-reset-blok">⚠️ Urung Blok</button>
-        <button id="btnResetBulan" class="btn-reset-bulan">🗑️ Reset Bulan</button>
     </div>
 </div>
 
@@ -350,7 +343,6 @@ const halamanUtama = document.getElementById('halamanUtama');
 const infoPetugasEl = document.getElementById('infoPetugas');
 const btnMode = document.getElementById('btnMode');
 const btnPDF = document.getElementById('btnPDF');
-const kotakNotifikasi = document.getElementById('kotakNotifikasi');
 
 function formatRupiah(angka) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
@@ -378,7 +370,6 @@ aturTema();
 document.getElementById('btnMasuk').addEventListener('click', () => {
     const pengguna = document.getElementById('inputPengguna').value.trim();
     const sandi = document.getElementById('inputSandiLogin').value;
-    
     if (DAFTAR_PETUGAS[pengguna] && DAFTAR_PETUGAS[pengguna].sandi === sandi) {
         penggunaSaatIni = { id: pengguna, ...DAFTAR_PETUGAS[pengguna] };
         halamanLogin.classList.add('sembunyi');
@@ -403,10 +394,11 @@ document.getElementById('btnLogout').addEventListener('click', () => {
 });
 
 function tampilkanNotifikasi(judul, isi) {
+    const kotak = document.getElementById('kotakNotifikasi');
     document.getElementById('notifJudul').textContent = judul;
     document.getElementById('notifIsi').textContent = isi;
-    kotakNotifikasi.classList.add('tampil');
-    setTimeout(() => kotakNotifikasi.classList.remove('tampil'), 4000);
+    kotak.classList.add('tampil');
+    setTimeout(() => kotak.classList.remove('tampil'), 3500);
 }
 
 function isiPilihanBulan() {
@@ -419,8 +411,8 @@ function isiPilihanBulan() {
     }
     document.getElementById('monthSelect').innerHTML = daftarBulan.map(kode => {
         const [thn, bln] = kode.split('-');
-        const namaBulan = new Date(thn, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-        return `<option value="${kode}">${namaBulan}</option>`;
+        const nama = new Date(thn, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        return `<option value="${kode}">${nama}</option>`;
     }).join('');
     const kodeSekarang = `${sekarang.getFullYear()}-${String(sekarang.getMonth() + 1).padStart(2,'0')}`;
     document.getElementById('monthSelect').value = kodeSekarang;
@@ -432,7 +424,6 @@ function bolehUbahBlok(blok) {
 
 function mulaiDengarPerubahan(periode, blok) {
     if (pendengarPerubahan) pendengarPerubahan();
-
     document.getElementById('statusFirebase').textContent = "🔄 Memuat...";
     document.getElementById('statusFirebase').className = "status-sinkron";
 
@@ -445,11 +436,10 @@ function mulaiDengarPerubahan(periode, blok) {
                 const d = doc.data();
                 pembayaranRealtime[d.noRumah] = {
                     tanggal: d.tanggal,
-                    namaPengguna: d.namaPengguna || 'Tidak diketahui',
+                    namaPengguna: d.namaPengguna || '-',
                     waktuDiubah: d.waktuDiubah
                 };
             });
-
             document.getElementById('statusFirebase').textContent = "✓ Terhubung & Terbaru";
             document.getElementById('statusFirebase').className = "status-sinkron terhubung";
             tampilkanGridDariData();
@@ -461,17 +451,13 @@ function mulaiDengarPerubahan(periode, blok) {
 }
 
 async function simpanKeFirebase(periode, blok, noRumah, tanggal) {
-    if (!bolehUbahBlok(blok)) {
-        alert('❌ Anda hanya bisa mengubah data blok Anda saja!');
-        return;
-    }
-
-    const kunci = `${periode}-${blok}${noRumah}`;
+    if (!bolehUbahBlok(blok)) { alert('❌ Bukan blok Anda!'); return; }
+    const noRumahPenuh = `${blok}${noRumah}`;
+    const kunci = `${periode}-${noRumahPenuh}`;
     const ref = db.collection('iuran').doc(kunci);
-
     if (tanggal) {
         await ref.set({
-            periode, blok, noRumah: `${blok}${noRumah}`, tanggal,
+            periode, blok, noRumah: noRumahPenuh, tanggal,
             namaPengguna: penggunaSaatIni.nama,
             diubahOleh: penggunaSaatIni.id,
             waktuDiubah: firebase.firestore.FieldValue.serverTimestamp()
@@ -485,22 +471,16 @@ function tampilkanGridDariData() {
     const wadah = document.getElementById('gridContainer');
     wadah.innerHTML = '';
     let sudah = 0, belum = 0;
-
     for (let no = 1; no <= 50; no++) {
         const noRumah = `${currentBlok}${no}`;
         const info = pembayaranRealtime[noRumah];
         info ? sudah++ : belum++;
-
         const kotak = document.createElement('div');
         kotak.className = `box ${info ? 'paid' : 'unpaid'}`;
-        kotak.innerHTML = `
-            <div class="id">${noRumah}</div>
-            <div class="date">${info ? info.tanggal : 'Belum Bayar'}</div>
-        `;
+        kotak.innerHTML = `<div class="id">${noRumah}</div><div class="date">${info ? info.tanggal : 'Belum Bayar'}</div>`;
         kotak.addEventListener('click', () => bukaModalBayar(no, document.getElementById('monthSelect').value));
         wadah.appendChild(kotak);
     }
-
     document.getElementById('jmlSudah').textContent = sudah;
     document.getElementById('jmlBelum').textContent = belum;
 }
@@ -515,84 +495,56 @@ async function tampilkanRekap() {
     const periode = document.getElementById('monthSelect').value;
     const [thn, bln] = periode.split('-');
     document.getElementById('namaBulan').textContent = new Date(thn, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-
-    const daftarBlok = ['A', 'B', 'C', 'D'];
-    let totalSemua = 0;
-    let html = '';
-
-    for (const blok of daftarBlok) {
-        const snapshot = await db.collection('iuran')
-            .where('periode', '==', periode)
-            .where('blok', '==', blok)
-            .get();
-
-        const sudah = snapshot.size;
+    let totalSemua = 0, html = '';
+    for (const blok of ['A','B','C','D']) {
+        const snap = await db.collection('iuran').where('periode','==',periode).where('blok','==',blok).get();
+        const sudah = snap.size;
         const jumlah = sudah * IURAN_PER_RUMAH;
         totalSemua += jumlah;
-
-        html += `
-        <div class="rekap-baris">
-            <span>Blok ${blok} — ${sudah} rumah / 50</span>
-            <span class="uang">${formatRupiah(jumlah)}</span>
-        </div>`;
+        html += `<div class="rekap-baris"><span>Blok ${blok} — ${sudah}/50</span><span class="uang">${formatRupiah(jumlah)}</span></div>`;
     }
-
     document.getElementById('rekapPerBlok').innerHTML = html;
     document.getElementById('totalSemuaBlok').textContent = formatRupiah(totalSemua);
 }
 
 btnPDF.addEventListener('click', async () => {
     const btn = btnPDF;
-    btn.textContent = "⏳ Membuat PDF..."; btn.disabled = true;
-
+    btn.textContent = "⏳ Membuat..."; btn.disabled = true;
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    
-    doc.setFontSize(18);
-    doc.text("IURAN RUTIN - PARADISE RESIDENCE 4", 105, 20, { align: 'center' });
+    doc.setFontSize(17);
+    doc.text("IURAN RUTIN - PARADISE RESIDENCE 4", 105, 22, { align: 'center' });
     doc.setFontSize(11);
-    doc.text("JL. HAJI UMAR — KAMPAK - PANGKALPINANG", 105, 30, { align: 'center' });
-    doc.text("Periode: " + document.getElementById('namaBulan').textContent, 105, 40, { align: 'center' });
-    doc.text("Iuran per rumah: Rp 10.000", 105, 48, { align: 'center' });
-
-    let y = 60;
-    const baris = document.querySelectorAll('#rekapPerBlok .rekap-baris');
-    baris.forEach(b => {
-        const label = b.querySelector('span:first-child').textContent;
-        const nilai = b.querySelector('.uang').textContent;
-        doc.text(label, 20, y);
-        doc.text(nilai, 190, y, { align: 'right' });
-        y += 10;
+    doc.text("JL. HAJI UMAR — KAMPAK - PANGKALPINANG", 105, 32, { align: 'center' });
+    doc.text("Periode: " + document.getElementById('namaBulan').textContent, 105, 42, { align: 'center' });
+    doc.text("Iuran per rumah: Rp 10.000", 105, 50, { align: 'center' });
+    let y = 62;
+    document.querySelectorAll('#rekapPerBlok .rekap-baris').forEach(b => {
+        doc.text(b.querySelector('span:first-child').textContent, 20, y);
+        doc.text(b.querySelector('.uang').textContent, 190, y, { align: 'right' });
+        y += 9;
     });
-
-    const total = document.getElementById('totalSemuaBlok').textContent;
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
-    doc.text("TOTAL SELURUH BLOK", 20, y + 10);
-    doc.text(total, 190, y + 10, { align: 'right' });
-
-    doc.text("Dicetak oleh: " + penggunaSaatIni.nama, 20, y + 30);
-    doc.text(new Date().toLocaleString('id-ID'), 190, y + 30, { align: 'right' });
-
+    doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+    doc.text("TOTAL SEMUA BLOK", 20, y+8);
+    doc.text(document.getElementById('totalSemuaBlok').textContent, 190, y+8, { align: 'right' });
+    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
+    doc.text("Dicetak: " + penggunaSaatIni.nama, 20, y+25);
+    doc.text(new Date().toLocaleString('id-ID'), 190, y+25, { align: 'right' });
     doc.save(`IURAN-${document.getElementById('monthSelect').value}.pdf`);
-    
     btn.textContent = "📄 Export PDF"; btn.disabled = false;
-    tampilkanNotifikasi('✅ PDF Berhasil', 'File rekapitulasi sudah terunduh');
+    tampilkanNotifikasi('✅ Selesai', 'PDF sudah terunduh');
 });
 
 document.getElementById('tabs').addEventListener('click', e => {
     if (!e.target.classList.contains('tab')) return;
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     e.target.classList.add('active');
-
-    const tabJenis = e.target.dataset.tab;
-    currentTab = tabJenis;
-
+    const jns = e.target.dataset.tab;
+    currentTab = jns;
     document.getElementById('kontenGrid').classList.remove('active');
     document.getElementById('kontenRekap').classList.remove('active');
     document.getElementById('kontenBlok').classList.remove('active');
-
-    if (tabJenis === 'blok') {
+    if (jns === 'blok') {
         currentBlok = e.target.dataset.blok;
         document.getElementById('kontenGrid').classList.add('active');
         document.getElementById('kontenBlok').classList.add('active');
@@ -604,21 +556,16 @@ document.getElementById('tabs').addEventListener('click', e => {
 });
 
 function bukaModalBayar(no, periode) {
-    if (!bolehUbahBlok(currentBlok)) {
-        alert(`🔒 Anda hanya bertugas di Blok ${penggunaSaatIni.blok}`);
-        return;
-    }
+    if (!bolehUbahBlok(currentBlok)) { alert(`🔒 Anda hanya bertugas di Blok ${penggunaSaatIni.blok}`); return; }
     currentIndex = { no, periode };
     const noRumah = `${currentBlok}${no}`;
-    document.getElementById('modalJudul').textContent = `${noRumah} — Pilih Tanggal Bayar`;
+    document.getElementById('modalJudul').textContent = `${noRumah} — Tanggal Bayar`;
     document.getElementById('tglBayar').value = pembayaranRealtime[noRumah]?.tanggal || '';
     document.getElementById('modalBayar').classList.add('show');
 }
-
 document.getElementById('btnBatal').addEventListener('click', () => {
     document.getElementById('modalBayar').classList.remove('show');
 });
-
 document.getElementById('btnSimpan').addEventListener('click', async () => {
     if (!document.getElementById('tglBayar').value) { alert('Pilih tanggal dulu!'); return; }
     const btn = document.getElementById('btnSimpan');
@@ -627,54 +574,68 @@ document.getElementById('btnSimpan').addEventListener('click', async () => {
     btn.disabled = false; btn.textContent = "Simpan";
     document.getElementById('modalBayar').classList.remove('show');
 });
-
 document.getElementById('btnHapus').addEventListener('click', () => {
-    if (!confirm('Yakin hapus status ini?')) return;
+    if (!confirm('Yakin hapus?')) return;
     simpanKeFirebase(currentIndex.periode, currentBlok, currentIndex.no, null);
     document.getElementById('modalBayar').classList.remove('show');
 });
 
-// === DIPERBAIKI: Riwayat Perubahan ===
+// === RIWAYAT — DIPERBAIKI & DIPASTIKAN STABIL ===
 document.getElementById('btnLihatRiwayat').addEventListener('click', async () => {
     document.getElementById('modalBayar').classList.remove('show');
     const noRumah = `${currentBlok}${currentIndex.no}`;
     const periode = currentIndex.periode;
     
     document.getElementById('judulRiwayat').textContent = `Riwayat — ${noRumah}`;
-    document.getElementById('daftarRiwayat').innerHTML = '<div class="memuat">Memuat...</div>';
+    const wadah = document.getElementById('daftarRiwayat');
+    wadah.innerHTML = '<div class="memuat">Memuat...</div>';
     document.getElementById('modalRiwayat').classList.add('show');
 
     try {
-        // Cari berdasarkan dokumen ID karena noRumah tidak selalu terurut
+        // Ambil SEMUA dokumen periode ini, lalu saring — PALING AMAN
         const snapshot = await db.collection('iuran')
             .where('periode', '==', periode)
-            .where('noRumah', '==', noRumah)
             .get();
 
-        if (snapshot.empty) {
-            document.getElementById('daftarRiwayat').innerHTML = `
-                <p style="text-align:center; color:#888; padding:20px;">
-                    Belum ada riwayat perubahan<br>
-                    Rumah ini belum dicatat pembayarannya
+        const hasil = [];
+        snapshot.forEach(doc => {
+            const d = doc.data();
+            // Cocokkan dengan format yang ada
+            if (d.noRumah === noRumah || d.noRumah === `${currentBlok}${currentIndex.no}`) {
+                hasil.push(d);
+            }
+        });
+
+        if (hasil.length === 0) {
+            wadah.innerHTML = `
+                <p style="text-align:center; color:#888; padding:30px 15px;">
+                    Rumah ini belum ada riwayat<br>
+                    Belum pernah dicatat pembayarannya
                 </p>`;
             return;
         }
 
+        // Urutkan dari yang TERBARU
+        hasil.sort((a, b) => {
+            const ta = a.waktuDiubah?.toDate ? a.waktuDiubah.toDate() : new Date(0);
+            const tb = b.waktuDiubah?.toDate ? b.waktuDiubah.toDate() : new Date(0);
+            return tb - ta;
+        });
+
         let html = '';
-        snapshot.forEach(doc => {
-            const d = doc.data();
+        hasil.forEach(d => {
             html += `
             <div class="item-riwayat">
                 <div class="nama">${d.namaPengguna || d.diubahOleh || 'Tidak diketahui'}</div>
                 <div>Tanggal bayar: ${d.tanggal || '-'}</div>
-                <div class="waktu">${formatTanggal(d.waktuDiubah)}</div>
+                <div class="waktu">Diubah: ${formatTanggal(d.waktuDiubah)}</div>
             </div>`;
         });
-        document.getElementById('daftarRiwayat').innerHTML = html;
+        wadah.innerHTML = html;
     } catch (err) {
-        console.error(err);
-        document.getElementById('daftarRiwayat').innerHTML = `
-            <p style="text-align:center; color:#ff3b30; padding:20px;">
+        console.error('Error riwayat:', err);
+        wadah.innerHTML = `
+            <p style="text-align:center; color:#ff3b30; padding:30px 15px;">
                 ⚠️ Gagal memuat riwayat<br>
                 ${err.message}
             </p>`;
@@ -690,48 +651,31 @@ function tutupDanLanjut(aksi) {
     document.getElementById('inputSandiAksi').value = '';
     document.getElementById('modalSandi').classList.add('show');
 }
-
 document.getElementById('btnUrung').addEventListener('click', () => {
-    document.getElementById('teksKonfirmasi').textContent = `Yakin urungkan semua data Blok ${currentBlok}?`;
+    document.getElementById('teksKonfirmasi').textContent = `Yakin urungkan semua Blok ${currentBlok}?`;
     tutupDanLanjut('resetBlok');
 });
-
 document.getElementById('btnResetBulan').addEventListener('click', () => {
-    if (penggunaSaatIni.blok !== 'SEMUA') {
-        alert('❌ Hanya Admin yang boleh reset seluruh bulan!');
-        return;
-    }
-    document.getElementById('teksKonfirmasi').textContent = '⚠️ Hapus SEMUA data seluruh bulan ini?';
+    if (penggunaSaatIni.blok !== 'SEMUA') { alert('❌ Hanya Admin!'); return; }
+    document.getElementById('teksKonfirmasi').textContent = '⚠️ Hapus SEMUA data bulan ini?';
     tutupDanLanjut('resetBulan');
 });
-
 document.getElementById('btnBatalAksi').addEventListener('click', () => {
     document.getElementById('modalSandi').classList.remove('show');
     tindakanLulus = null;
 });
-
 document.getElementById('btnKonfirmasiAksi').addEventListener('click', async () => {
-    const sandi = document.getElementById('inputSandiAksi').value;
-    if (sandi !== penggunaSaatIni.sandi) {
-        alert('❌ Kata sandi salah!');
-        return;
-    }
+    if (document.getElementById('inputSandiAksi').value !== penggunaSaatIni.sandi) { alert('❌ Kata sandi salah!'); return; }
     document.getElementById('modalSandi').classList.remove('show');
-    
     const periode = document.getElementById('monthSelect').value;
-
     if (tindakanLulus === 'resetBlok') {
         if (!bolehUbahBlok(currentBlok)) { alert('❌ Bukan blok Anda!'); return; }
-        const snap = await db.collection('iuran')
-            .where('periode', '==', periode)
-            .where('blok', '==', currentBlok)
-            .get();
+        const snap = await db.collection('iuran').where('periode','==',periode).where('blok','==',currentBlok).get();
         await Promise.all(snap.docs.map(d => d.ref.delete()));
         alert(`✅ Blok ${currentBlok} dikosongkan`);
     }
-
     if (tindakanLulus === 'resetBulan') {
-        const snap = await db.collection('iuran').where('periode', '==', periode).get();
+        const snap = await db.collection('iuran').where('periode','==',periode).get();
         await Promise.all(snap.docs.map(d => d.ref.delete()));
         alert(`✅ Semua data dihapus`);
     }
@@ -739,16 +683,12 @@ document.getElementById('btnKonfirmasiAksi').addEventListener('click', async () 
 });
 
 document.getElementById('btnReload').addEventListener('click', () => {
-    if (currentTab === 'rekap') tampilkanRekap();
-    else tampilkanGrid();
-    tampilkanNotifikasi('✅ Disegarkan', 'Data terbaru sudah dimuat');
+    currentTab === 'rekap' ? tampilkanRekap() : tampilkanGrid();
+    tampilkanNotifikasi('✅ Disegarkan', 'Data terbaru dimuat');
 });
-
 document.getElementById('monthSelect').addEventListener('change', () => {
-    if (currentTab === 'rekap') tampilkanRekap();
-    else tampilkanGrid();
+    currentTab === 'rekap' ? tampilkanRekap() : tampilkanGrid();
 });
 </script>
-
 </body>
 </html>
