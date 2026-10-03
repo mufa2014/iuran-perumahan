@@ -4,402 +4,126 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iuran Perumahan Paradise Residence 4</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, sans-serif;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
         :root {
-            --hijau: #34c759;
-            --merah: #ff3b30;
-            --biru: #007aff;
-            --oranye: #ff9500;
-            --abu: #e5e5e7;
-            --gelap: #1d1d1f;
-            --putih: #ffffff;
-            --latar: #f2f2f7;
+            --hijau: #34c759; --merah: #ff3b30; --biru: #007aff; --oranye: #ff9500;
+            --abu: #e5e5e7; --gelap: #1d1d1f; --putih: #ffffff; --latar: #f2f2f7;
         }
-
-        body {
-            background: var(--latar);
-            padding: 16px;
-            max-width: 960px;
-            margin: 0 auto;
-        }
-
-        /* ===== HEADER IDENTITAS PERUMAHAN ===== */
+        body { background: var(--latar); padding: 16px; max-width: 960px; margin: 0 auto; }
         .identitas {
-            background: linear-gradient(135deg, var(--biru), #005fcc);
-            color: #fff;
-            padding: 20px;
-            border-radius: 16px;
-            text-align: center;
-            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--biru), #005fcc); color: #fff;
+            padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 16px;
             box-shadow: 0 4px 12px rgba(0,122,255,0.2);
         }
-
-        .identitas h1 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 6px;
+        .identitas h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+        .identitas .alamat { font-size: 13px; opacity: 0.9; }
+        .status-sinkron {
+            font-size: 12px; margin-top: 6px; padding: 4px 10px; border-radius: 20px; display: inline-block;
         }
-
-        .identitas .alamat {
-            font-size: 13px;
-            opacity: 0.9;
-        }
-
+        .status-sinkron.terhubung { background: #d1fae5; color: #065f46; }
+        .status-sinkron.terputus { background: #fee2e2; color: #991b1b; }
         .header {
-            background: var(--putih);
-            padding: 20px;
-            border-radius: 16px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            margin-bottom: 16px;
+            background: var(--putih); padding: 20px; border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 16px;
         }
-
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
+        .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
         select {
-            padding: 10px 14px;
-            border-radius: 10px;
-            border: 1px solid #d1d1d6;
-            font-size: 15px;
-            background: var(--putih);
-            min-width: 180px;
+            padding: 10px 14px; border-radius: 10px; border: 1px solid #d1d1d6;
+            font-size: 15px; background: var(--putih); min-width: 180px;
         }
-
-        .legend {
-            display: flex;
-            gap: 20px;
-            font-size: 14px;
-        }
-
-        .legend span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .dot.paid {
-            background: var(--hijau);
-            box-shadow: 0 0 0 2px rgba(52,199,89,0.2);
-        }
-
-        .dot.unpaid {
-            background: var(--merah);
-            box-shadow: 0 0 0 2px rgba(255,59,48,0.2);
-        }
-
-        .tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-
+        .legend { display: flex; gap: 20px; font-size: 14px; }
+        .legend span { display: flex; align-items: center; gap: 6px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .dot.paid { background: var(--hijau); }
+        .dot.unpaid { background: var(--merah); }
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
         .tab {
-            padding: 12px 20px;
-            border-radius: 12px 12px 0 0;
-            background: var(--abu);
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.2s ease;
+            padding: 12px 20px; border-radius: 12px 12px 0 0; background: var(--abu);
+            border: none; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s ease;
         }
-
-        .tab:hover {
-            background: #d1d1d6;
-        }
-
-        .tab.active {
-            background: var(--putih);
-            box-shadow: 0 -3px 0 var(--biru);
-            color: var(--biru);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Grid 5×10 */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 12px;
-        }
-
+        .tab:hover { background: #d1d1d6; }
+        .tab.active { background: var(--putih); box-shadow: 0 -3px 0 var(--biru); color: var(--biru); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
         .box {
-            background: var(--putih);
-            border-radius: 12px;
-            padding: 18px 10px;
-            text-align: center;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all 0.25s ease;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            min-height: 80px;
+            background: var(--putih); border-radius: 12px; padding: 18px 10px; text-align: center;
+            cursor: pointer; border: 2px solid transparent; transition: all 0.25s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05); min-height: 80px;
         }
-
-        .box:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.1);
-        }
-
-        .box.unpaid {
-            background: #fff2f2;
-            border-color: var(--merah);
-        }
-
-        .box.paid {
-            background: #f2fff4;
-            border-color: var(--hijau);
-        }
-
-        .box .id {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .box .date {
-            font-size: 13px;
-            color: #636366;
-        }
-
-        /* Rekap */
+        .box:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.1); }
+        .box.unpaid { background: #fff2f2; border-color: var(--merah); }
+        .box.paid { background: #f2fff4; border-color: var(--hijau); }
+        .box .id { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+        .box .date { font-size: 13px; color: #636366; }
         .rekap-card {
-            background: var(--putih);
-            border-radius: 16px;
-            padding: 24px;
+            background: var(--putih); border-radius: 16px; padding: 24px;
             box-shadow: 0 2px 12px rgba(0,0,0,0.06);
         }
-
-        .rekap-card h2 {
-            font-size: 18px;
-            margin-bottom: 20px;
-            color: var(--gelap);
-        }
-
+        .rekap-card h2 { font-size: 18px; margin-bottom: 20px; color: var(--gelap); }
         .rekap-baris {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 0;
-            border-bottom: 1px solid #eee;
-            font-size: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 0; border-bottom: 1px solid #eee; font-size: 15px;
         }
-
-        .rekap-baris:last-child {
-            border-bottom: none;
-        }
-
+        .rekap-baris:last-child { border-bottom: none; }
         .rekap-baris.total {
-            font-weight: 700;
-            font-size: 17px;
-            border-top: 2px solid var(--biru);
-            border-bottom: none;
-            padding-top: 16px;
-            margin-top: 8px;
+            font-weight: 700; font-size: 17px; border-top: 2px solid var(--biru);
+            padding-top: 16px; margin-top: 8px;
         }
-
-        .uang {
-            font-weight: 600;
-            color: var(--biru);
-        }
-
-        .uang.besar {
-            font-size: 19px;
-            color: #0066cc;
-        }
-
-        .ket {
-            font-size: 13px;
-            color: #8e8e93;
-            margin-top: 4px;
-        }
-
+        .uang { font-weight: 600; color: var(--biru); }
+        .uang.besar { font-size: 19px; color: #0066cc; }
+        .ket { font-size: 13px; color: #8e8e93; margin-top: 4px; }
         .modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 999;
-            backdrop-filter: blur(4px);
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none;
+            align-items: center; justify-content: center; padding: 20px; z-index: 999;
         }
-
-        .modal.show {
-            display: flex;
-        }
-
+        .modal.show { display: flex; }
         .modal-content {
-            background: var(--putih);
-            padding: 28px;
-            border-radius: 20px;
-            width: 100%;
-            max-width: 340px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            background: var(--putih); padding: 28px; border-radius: 20px; width: 100%;
+            max-width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
-
-        .modal-content h3 {
-            margin-bottom: 20px;
-            font-size: 17px;
-            font-weight: 600;
+        .modal-content h3 { margin-bottom: 20px; font-size: 17px; font-weight: 600; }
+        input[type="date"], input[type="password"] {
+            width: 100%; padding: 12px; margin-bottom: 16px;
+            border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px;
         }
-
-        input[type="date"],
-        input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 16px;
-            border: 1px solid #d1d1d6;
-            border-radius: 10px;
-            font-size: 16px;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-        }
-
+        .btn-group { display: flex; gap: 10px; }
         button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            font-size: 15px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: transform 0.15s;
+            flex: 1; padding: 12px; border: none; border-radius: 10px;
+            font-size: 15px; cursor: pointer; font-weight: 600;
         }
-
-        button:active {
-            transform: scale(0.97);
-        }
-
-        .btn-cancel {
-            background: var(--abu);
-            color: var(--gelap);
-        }
-
-        .btn-save {
-            background: var(--biru);
-            color: #fff;
-        }
-
-        .btn-delete {
-            background: var(--merah);
-            color: #fff;
-            margin-top: 10px;
-            width: 100%;
-        }
-
-        .btn-pass-ok {
-            background: var(--biru);
-            color: #fff;
-            margin-top: 8px;
-            width: 100%;
-        }
-
-        .footer {
-            margin-top: 32px;
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .footer button {
-            flex: 1;
-            min-width: 170px;
-            background: var(--gelap);
-            color: #fff;
-        }
-
-        .btn-reset-blok {
-            background: var(--oranye);
-            color: #fff;
-        }
-
-        .btn-reset-bulan {
-            background: var(--merah);
-            color: #fff;
-        }
-
-        .stat-bar {
-            display: flex;
-            gap: 16px;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid #eee;
-            flex-wrap: wrap;
-        }
-
-        .stat-item {
-            font-size: 14px;
-        }
-
-        .stat-item b {
-            color: var(--biru);
-        }
-
+        .btn-cancel { background: var(--abu); color: var(--gelap); }
+        .btn-save { background: var(--biru); color: #fff; }
+        .btn-delete { background: var(--merah); color: #fff; margin-top: 10px; width: 100%; }
+        .btn-pass-ok { background: var(--biru); color: #fff; margin-top: 8px; width: 100%; }
+        .footer { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .footer button { flex: 1; min-width: 170px; background: var(--gelap); color: #fff; }
+        .btn-reset-blok { background: var(--oranye); color: #fff; }
+        .btn-reset-bulan { background: var(--merah); color: #fff; }
+        .stat-bar { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; flex-wrap: wrap; }
+        .stat-item { font-size: 14px; }
+        .stat-item b { color: var(--biru); }
+        .memuat { text-align: center; padding: 30px; color: #666; }
         @media (max-width: 480px) {
-            .grid {
-                gap: 8px;
-            }
-
-            .box {
-                padding: 14px 6px;
-                min-height: 70px;
-            }
-
-            .box .id {
-                font-size: 17px;
-                }
-
-            .box .date {
-                font-size: 11px;
-            }
-
-            .identitas h1 {
-                font-size: 17px;
-            }
-
-            .identitas .alamat {
-                font-size: 12px;
-            }
+            .grid { gap: 8px; }
+            .box { padding: 14px 6px; min-height: 70px; }
+            .box .id { font-size: 17px; }
+            .box .date { font-size: 11px; }
         }
     </style>
 </head>
 <body>
 
-<!-- ===== NAMA & ALAMAT PERUMAHAN ===== -->
 <div class="identitas">
     <h1>🏠 IURAN RUTIN PERUMAHAN PARADISE RESIDENCE 4</h1>
     <p class="alamat">JL. HAJI UMAR - KAMPAK PANGKALPINANG</p>
+    <span class="status-sinkron" id="statusFirebase">🔄 Memuat...</span>
 </div>
 
 <div class="header">
@@ -429,19 +153,19 @@
     </div>
 </div>
 
-<!-- Konten Blok -->
 <div class="tab-content active" id="kontenGrid">
-    <div class="grid" id="gridContainer"></div>
+    <div class="grid" id="gridContainer">
+        <div class="memuat">🔄 Memuat data dari server...</div>
+    </div>
 </div>
 
-<!-- Konten Rekap -->
 <div class="tab-content" id="kontenRekap">
     <div class="rekap-card">
         <h2>📊 Rekapitulasi Iuran — <span id="namaBulan"></span></h2>
-        <p class="ket">Iuran per rumah: <strong>Rp 10.000</strong></td></tr>
-        
-        <div id="rekapPerBlok"></div>
-
+        <p class="ket">Iuran per rumah: <strong>Rp 10.000</strong></p>
+        <div id="rekapPerBlok">
+            <div class="memuat">🔄 Memuat rekapitulasi...</div>
+        </div>
         <div class="rekap-baris total">
             <span>💰 TOTAL SELURUH BLOK</span>
             <span class="uang besar" id="totalSemuaBlok">Rp 0</span>
@@ -449,7 +173,6 @@
     </div>
 </div>
 
-<!-- Modal Pilih Tanggal -->
 <div class="modal" id="modalBayar">
     <div class="modal-content">
         <h3 id="modalJudul">Pilih Tanggal Bayar</h3>
@@ -462,7 +185,6 @@
     </div>
 </div>
 
-<!-- Modal Kata Sandi -->
 <div class="modal" id="modalSandi">
     <div class="modal-content">
         <h3>🔐 Masukkan Kata Sandi</h3>
@@ -475,15 +197,34 @@
 </div>
 
 <div class="footer">
-    <button id="btnSelesai">✅ Selesai / Segarkan</button>
+    <button id="btnSelesai">🔄 Segarkan Data</button>
     <button id="btnUrung" class="btn-reset-blok">⚠️ Urungkan Blok Ini</button>
     <button id="btnResetBulan" class="btn-reset-bulan">🗑️ Reset Bulan Ini Saja</button>
 </div>
 
 <script>
+// ==========================================
+// ✅ KONFIGURASI FIREBASE — SUDAH DIISI MILIKMU
+// ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBy6wCCaiUzTjkJ_NnnCwFSE7Ui0V2jUKE",
+  authDomain: "iuran-perumahan.firebaseapp.com",
+  projectId: "iuran-perumahan",
+  storageBucket: "iuran-perumahan.firebasestorage.app",
+  messagingSenderId: "815498403579",
+  appId: "1:815498403579:web:6d5fbbbc1b4dd0b05a5a5e",
+  measurementId: "G-6Q3QCQZ39V"
+};
+
+// Inisialisasi Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Pengaturan
 const KATA_SANDI = "12345";
 const IURAN_PER_RUMAH = 10000;
 
+// Elemen DOM
 const monthSelect = document.getElementById('monthSelect');
 const tabsContainer = document.getElementById('tabs');
 const gridContainer = document.getElementById('gridContainer');
@@ -504,26 +245,17 @@ const jmlBelumEl = document.getElementById('jmlBelum');
 const namaBulanEl = document.getElementById('namaBulan');
 const rekapPerBlokEl = document.getElementById('rekapPerBlok');
 const totalSemuaBlokEl = document.getElementById('totalSemuaBlok');
+const statusFirebaseEl = document.getElementById('statusFirebase');
 
 let currentBlok = 'A';
 let currentTab = 'blok';
 let currentIndex = null;
 let tindakanLulus = null;
-let payments = {};
+let pembayaranRealtime = {};
+let pendengarPerubahan = null;
 
 function formatRupiah(angka) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-}
-
-function muatData() {
-    const simpanan = localStorage.getItem('dataIuran');
-    if (simpanan) {
-        payments = JSON.parse(simpanan);
-    }
-}
-
-function simpanData() {
-    localStorage.setItem('dataIuran', JSON.stringify(payments));
 }
 
 function isiPilihanBulan() {
@@ -531,7 +263,7 @@ function isiPilihanBulan() {
     const sekarang = new Date();
     for (let thn = sekarang.getFullYear() - 1; thn <= sekarang.getFullYear() + 1; thn++) {
         for (let bln = 1; bln <= 12; bln++) {
-            daftarBulan.push(`${thn}-${String(bln).padStart(2, '0')}`);
+            daftarBulan.push(`${thn}-${String(bln).padStart(2,'0')}`);
         }
     }
     monthSelect.innerHTML = daftarBulan.map(kode => {
@@ -539,8 +271,114 @@ function isiPilihanBulan() {
         const namaBulan = new Date(thn, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
         return `<option value="${kode}">${namaBulan}</option>`;
     }).join('');
-    const kodeSekarang = `${sekarang.getFullYear()}-${String(sekarang.getMonth() + 1).padStart(2, '0')}`;
+    const kodeSekarang = `${sekarang.getFullYear()}-${String(sekarang.getMonth() + 1).padStart(2,'0')}`;
     monthSelect.value = kodeSekarang;
+}
+
+function mulaiDengarPerubahan(periode, blok) {
+    if (pendengarPerubahan) pendengarPerubahan();
+
+    statusFirebaseEl.textContent = "🔄 Memuat...";
+    statusFirebaseEl.className = "status-sinkron";
+
+    pendengarPerubahan = db.collection('iuran')
+        .where('periode', '==', periode)
+        .where('blok', '==', blok)
+        .onSnapshot(
+            (snapshot) => {
+                pembayaranRealtime = {};
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    pembayaranRealtime[data.noRumah] = {
+                        tanggal: data.tanggal,
+                        diubahOleh: data.diubahOleh || 'tidak diketahui',
+                        waktuDiubah: data.waktuDiubah
+                    };
+                });
+                statusFirebaseEl.textContent = "✓ Terhubung & Terbaru";
+                statusFirebaseEl.className = "status-sinkron terhubung";
+                tampilkanGridDariData();
+            },
+            (error) => {
+                console.error("Kesalahan Firebase:", error);
+                statusFirebaseEl.textContent = "⚠️ Terputus";
+                statusFirebaseEl.className = "status-sinkron terputus";
+            }
+        );
+}
+
+async function simpanKeFirebase(periode, blok, noRumah, tanggal) {
+    const kunciDokumen = `${periode}-${blok}${noRumah}`;
+    const ref = db.collection('iuran').doc(kunciDokumen);
+
+    if (tanggal) {
+        await ref.set({
+            periode, blok, noRumah: `${blok}${noRumah}`, tanggal,
+            diubahOleh: navigator.userAgent.substring(0, 40),
+            waktuDiubah: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } else {
+        await ref.delete();
+    }
+}
+
+function tampilkanGridDariData() {
+    gridContainer.innerHTML = '';
+    let sudah = 0, belum = 0;
+
+    for (let no = 1; no <= 50; no++) {
+        const noRumah = `${currentBlok}${no}`;
+        const info = pembayaranRealtime[noRumah];
+        info ? sudah++ : belum++;
+
+        const kotak = document.createElement('div');
+        kotak.className = `box ${info ? 'paid' : 'unpaid'}`;
+        kotak.innerHTML = `
+            <div class="id">${noRumah}</div>
+            <div class="date">${info ? info.tanggal : 'Belum Bayar'}</div>
+        `;
+        kotak.addEventListener('click', () => bukaModalBayar(no, monthSelect.value));
+        gridContainer.appendChild(kotak);
+    }
+
+    jmlSudahEl.textContent = sudah;
+    jmlBelumEl.textContent = belum;
+}
+
+function tampilkanGrid() {
+    mulaiDengarPerubahan(monthSelect.value, currentBlok);
+}
+
+async function tampilkanRekap() {
+    const periode = monthSelect.value;
+    const [thn, bln] = periode.split('-');
+    namaBulanEl.textContent = new Date(thn, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+
+    rekapPerBlokEl.innerHTML = '<div class="memuat">🔄 Menghitung...</div>';
+
+    const daftarBlok = ['A', 'B', 'C', 'D'];
+    let totalSemua = 0;
+    let html = '';
+
+    for (const blok of daftarBlok) {
+        const snapshot = await db.collection('iuran')
+            .where('periode', '==', periode)
+            .where('blok', '==', blok)
+            .get();
+
+        const sudah = snapshot.size;
+        const jumlahUang = sudah * IURAN_PER_RUMAH;
+        totalSemua += jumlahUang;
+
+        html += `
+        <div class="rekap-baris">
+            <span>Blok ${blok} — ${sudah} rumah / 50</span>
+            <span class="uang">${formatRupiah(jumlahUang)}</span>
+        </div>`;
+    }
+
+    rekapPerBlokEl.innerHTML = html;
+    totalSemuaBlokEl.textContent = formatRupiah(totalSemua);
 }
 
 tabsContainer.addEventListener('click', e => {
@@ -566,102 +404,46 @@ tabsContainer.addEventListener('click', e => {
     }
 });
 
-function tampilkanGrid() {
-    gridContainer.innerHTML = '';
-    const periode = monthSelect.value;
-    let sudah = 0, belum = 0;
-
-    for (let no = 1; no <= 50; no++) {
-        const kunci = `${periode}-${currentBlok}${no}`;
-        const info = payments[kunci];
-        info ? sudah++ : belum++;
-
-        const kotak = document.createElement('div');
-        kotak.className = `box ${info ? 'paid' : 'unpaid'}`;
-        kotak.innerHTML = `
-            <div class="id">${currentBlok}${no}</div>
-            <div class="date">${info ? info.tanggal : 'Belum Bayar'}</div>
-        `;
-        kotak.addEventListener('click', () => bukaModalBayar(no, periode));
-        gridContainer.appendChild(kotak);
-    }
-
-    jmlSudahEl.textContent = sudah;
-    jmlBelumEl.textContent = belum;
-}
-
-function tampilkanRekap() {
-    const periode = monthSelect.value;
-    const [thn, bln] = periode.split('-');
-    namaBulanEl.textContent = new Date(thn, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-
-    const daftarBlok = ['A', 'B', 'C', 'D'];
-    let totalSemua = 0;
-    let html = '';
-
-    for (const blok of daftarBlok) {
-        let sudah = 0;
-        for (let no = 1; no <= 50; no++) {
-            if (payments[`${periode}-${blok}${no}`]) {
-                sudah++;
-            }
-        }
-        const jumlahUang = sudah * IURAN_PER_RUMAH;
-        totalSemua += jumlahUang;
-
-        html += `
-        <div class="rekap-baris">
-            <span>Blok ${blok} — ${sudah} rumah / 50</span>
-            <span class="uang">${formatRupiah(jumlahUang)}</span>
-        </div>`;
-    }
-
-    rekapPerBlokEl.innerHTML = html;
-    totalSemuaBlokEl.textContent = formatRupiah(totalSemua);
-}
-
 function bukaModalBayar(no, periode) {
     currentIndex = { no, periode };
-    const kunci = `${periode}-${currentBlok}${no}`;
-    modalJudul.textContent = `${currentBlok}${no} — Pilih Tanggal Bayar`;
-    tglBayar.value = payments[kunci]?.tanggal || '';
+    const noRumah = `${currentBlok}${no}`;
+    document.getElementById('modalJudul').textContent = `${noRumah} — Pilih Tanggal Bayar`;
+    tglBayar.value = pembayaranRealtime[noRumah]?.tanggal || '';
     modalBayar.classList.add('show');
 }
 
 btnBatal.addEventListener('click', () => modalBayar.classList.remove('show'));
 
-btnSimpan.addEventListener('click', () => {
-    if (!tglBayar.value) {
-        alert('Silakan pilih tanggal!');
-        return;
-    }
-    const kunci = `${currentIndex.periode}-${currentBlok}${currentIndex.no}`;
-    payments[kunci] = { tanggal: tglBayar.value };
-    simpanData();
-    tampilkanGrid();
+btnSimpan.addEventListener('click', async () => {
+    if (!tglBayar.value) { alert('Silakan pilih tanggal!'); return; }
+    btnSimpan.disabled = true;
+    btnSimpan.textContent = "Menyimpan...";
+    await simpanKeFirebase(currentIndex.periode, currentBlok, currentIndex.no, tglBayar.value);
+    btnSimpan.disabled = false;
+    btnSimpan.textContent = "Simpan";
     modalBayar.classList.remove('show');
 });
 
-btnHapus.addEventListener('click', () => {
+btnHapus.addEventListener('click', async () => {
     if (!confirm('Yakin hapus status pembayaran ini?')) return;
-    const kunci = `${currentIndex.periode}-${currentBlok}${currentIndex.no}`;
-    delete payments[kunci];
-    simpanData();
-    tampilkanGrid();
+    btnHapus.disabled = true;
+    btnHapus.textContent = "Menghapus...";
+    await simpanKeFirebase(currentIndex.periode, currentBlok, currentIndex.no, null);
+    btnHapus.disabled = false;
+    btnHapus.textContent = "Hapus Status Bayar";
     modalBayar.classList.remove('show');
 });
 
 monthSelect.addEventListener('change', () => {
-    if (currentTab === 'rekap') {
-        tampilkanRekap();
-    } else {
-        tampilkanGrid();
-    }
+    if (currentTab === 'rekap') tampilkanRekap();
+    else tampilkanGrid();
 });
 
-btnSelesai.addEventListener('click', () => location.reload());
+btnSelesai.addEventListener('click', () => {
+    if (currentTab === 'rekap') tampilkanRekap();
+    else tampilkanGrid();
+});
 
-// Proteksi Kata Sandi
 function bukaKataSandi(tindakan) {
     tindakanLulus = tindakan;
     inputSandi.value = '';
@@ -680,39 +462,34 @@ btnKonfirmasi.addEventListener('click', () => {
     } else {
         alert('❌ Kata sandi salah! Coba lagi.');
         inputSandi.value = '';
-        inputSandi.focus();
     }
 });
 
-function lanjutkanTindakan() {
+async function lanjutkanTindakan() {
     if (!tindakanLulus) return;
     const periode = monthSelect.value;
     const namaPeriode = monthSelect.options[monthSelect.selectedIndex].text;
 
     if (tindakanLulus === 'resetBlok') {
         if (!confirm(`⚠️ Yakin URUNGKAN semua data Blok ${currentBlok} pada ${namaPeriode}?`)) return;
-        for (let no = 1; no <= 50; no++) {
-            delete payments[`${periode}-${currentBlok}${no}`];
-        }
-        simpanData();
-        tampilkanGrid();
-        alert(`✅ Blok ${currentBlok} pada ${namaPeriode} sudah dikembalikan ke Belum Bayar`);
+        const snapshot = await db.collection('iuran')
+            .where('periode', '==', periode)
+            .where('blok', '==', currentBlok)
+            .get();
+        const hapusSemua = [];
+        snapshot.forEach(doc => hapusSemua.push(doc.ref.delete()));
+        await Promise.all(hapusSemua);
+        alert(`✅ Blok ${currentBlok} sudah dikembalikan ke Belum Bayar`);
     }
 
     if (tindakanLulus === 'resetBulan') {
-        if (!confirm(`⚠️ PERINGATAN!\nIni akan MENGHAPUS SEMUA data seluruh blok pada:\n📅 ${namaPeriode}\n\nData bulan lain TETAP AMAN!\nYakin lanjut?`)) return;
+        if (!confirm(`⚠️ PERINGATAN!\nHapus SEMUA data seluruh blok pada:\n📅 ${namaPeriode}?`)) return;
         if (!confirm('Yakin BENAR-BENAR hapus SEMUA data bulan ini?')) return;
-        
-        const awalanKunci = `${periode}-`;
-        for (const kunci in payments) {
-            if (kunci.startsWith(awalanKunci)) {
-                delete payments[kunci];
-            }
-        }
-        
-        simpanData();
-        tampilkanGrid();
-        alert(`✅ Semua data pada ${namaPeriode} sudah dihapus\nData bulan lain tetap tersimpan.`);
+        const snapshot = await db.collection('iuran').where('periode', '==', periode).get();
+        const hapusSemua = [];
+        snapshot.forEach(doc => hapusSemua.push(doc.ref.delete()));
+        await Promise.all(hapusSemua);
+        alert(`✅ Semua data pada ${namaPeriode} sudah dihapus`);
     }
     tindakanLulus = null;
 }
@@ -720,7 +497,6 @@ function lanjutkanTindakan() {
 btnUrung.addEventListener('click', () => bukaKataSandi('resetBlok'));
 btnResetBulan.addEventListener('click', () => bukaKataSandi('resetBulan'));
 
-muatData();
 isiPilihanBulan();
 tampilkanGrid();
 </script>
