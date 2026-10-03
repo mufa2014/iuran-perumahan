@@ -49,12 +49,23 @@
         }
         .status-sinkron.terhubung { background: #d1fae5; color: #065f46; font-weight: 500; }
         .status-sinkron.terputus { background: #fee2e2; color: #991b1b; }
-        .kontrol-atas { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .btn-mode { 
-            background: var(--kartu); border: none; padding: 8px 14px; border-radius: 10px;
-            cursor: pointer; font-size: 14px; box-shadow: 0 2px 6px var(--bayangan);
+        .kontrol-atas { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
         }
+        .kelompok-kiri { display: flex; align-items: center; gap: 10px; }
         .info-petugas { font-size: 14px; font-weight: 500; padding: 6px 12px; background: var(--kartu); border-radius: 10px; }
+        
+        /* TOMBOL MODE — KECIL SELEBAR TULISAN SAJA */
+        .btn-mode { 
+            background: var(--kartu); border: none; padding: 6px 10px; border-radius: 8px;
+            cursor: pointer; font-size: 13px; box-shadow: 0 2px 6px var(--bayangan);
+            width: auto; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .btn-logout { 
+            background: var(--merah); color: #fff; border: none; padding: 6px 12px; 
+            border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: 500;
+        }
         
         .header {
             background: var(--kartu); padding: 20px; border-radius: 16px;
@@ -157,7 +168,8 @@
         .footer { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; }
         .footer button { flex: 1; min-width: 140px; }
         #btnReload { background: var(--biru); color: #fff; }
-        #btnPDF { background: var(--hijau); color: #fff; }
+        #btnPDF { background: var(--hijau); color: #fff; display: none; }
+        #btnPDF.tampil { display: block; }
         .btn-reset-blok { background: var(--oranye); color: #fff; }
         .btn-reset-bulan { background: var(--merah); color: #fff; }
         .stat-bar { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--batas); flex-wrap: wrap; }
@@ -207,8 +219,11 @@
 <!-- Halaman Utama -->
 <div id="halamanUtama" class="sembunyi">
     <div class="kontrol-atas">
-        <span class="info-petugas" id="infoPetugas"></span>
-        <button class="btn-mode" id="btnMode">🌙 Gelap</button>
+        <div class="kelompok-kiri">
+            <span class="info-petugas" id="infoPetugas"></span>
+            <button class="btn-mode" id="btnMode">🌙 Gelap</button>
+        </div>
+        <button class="btn-logout" id="btnLogout">🚪 Keluar</button>
     </div>
 
     <div class="identitas">
@@ -281,7 +296,7 @@
         <div class="modal-content" style="max-width: 380px;">
             <h3 id="judulRiwayat">Riwayat Perubahan</h3>
             <div class="daftar-riwayat" id="daftarRiwayat">
-                <div class="memuat">Memuat riwayat...</div>
+                <div class="memuat">Memuat...</div>
             </div>
             <button class="btn-cancel" style="margin-top: 16px;" id="btnTutupRiwayat">Tutup</button>
         </div>
@@ -351,6 +366,7 @@ const halamanLogin = document.getElementById('halamanLogin');
 const halamanUtama = document.getElementById('halamanUtama');
 const infoPetugasEl = document.getElementById('infoPetugas');
 const btnMode = document.getElementById('btnMode');
+const btnPDF = document.getElementById('btnPDF');
 const kotakNotifikasi = document.getElementById('kotakNotifikasi');
 
 // ==========================================
@@ -378,11 +394,12 @@ btnMode.addEventListener('click', () => {
     const mauGelap = !document.body.classList.contains('mode-gelap');
     document.body.classList.toggle('mode-gelap', mauGelap);
     localStorage.setItem('tema', mauGelap ? 'gelap' : 'terang');
+    btnMode.textContent = mauGelap ? '☀️ Terang' : '🌙 Gelap';
 });
 aturTema();
 
 // ==========================================
-// 🔐 LOGIN
+// 🔐 LOGIN & LOGOUT
 // ==========================================
 document.getElementById('btnMasuk').addEventListener('click', () => {
     const pengguna = document.getElementById('inputPengguna').value.trim();
@@ -397,6 +414,18 @@ document.getElementById('btnMasuk').addEventListener('click', () => {
         tampilkanGrid();
     } else {
         alert('❌ Nama pengguna atau kata sandi salah!');
+    }
+});
+
+// Logout
+document.getElementById('btnLogout').addEventListener('click', () => {
+    if (confirm('Yakin ingin keluar?')) {
+        penggunaSaatIni = null;
+        halamanUtama.classList.add('sembunyi');
+        halamanLogin.classList.remove('sembunyi');
+        document.getElementById('inputPengguna').value = '';
+        document.getElementById('inputSandiLogin').value = '';
+        if (pendengarPerubahan) pendengarPerubahan();
     }
 });
 
@@ -452,7 +481,7 @@ function mulaiDengarPerubahan(periode, blok) {
                 
                 const data = perubahan.doc.data();
                 if (perubahan.type === 'added') {
-                    tampilkanNotifikasi('✅ Pembayaran Dicatat', `${data.noRumah} — dibayar ${data.tanggal}\noleh ${data.diubahOleh?.split(' ')[0] || 'Seseorang'}`);
+                    tampilkanNotifikasi('✅ Pembayaran Dicatat', `${data.noRumah} — dibayar ${data.tanggal}\noleh ${data.namaPengguna?.split(' ')[0] || 'Seseorang'}`);
                 } else if (perubahan.type === 'removed') {
                     tampilkanNotifikasi('↩️ Status Dihapus', `${data.noRumah} — dikembalikan ke Belum Bayar`);
                 }
@@ -525,10 +554,12 @@ function tampilkanGridDariData() {
 }
 
 function tampilkanGrid() {
+    btnPDF.classList.remove('tampil');
     mulaiDengarPerubahan(document.getElementById('monthSelect').value, currentBlok);
 }
 
 async function tampilkanRekap() {
+    btnPDF.classList.add('tampil');
     const periode = document.getElementById('monthSelect').value;
     const [thn, bln] = periode.split('-');
     document.getElementById('namaBulan').textContent = new Date(thn, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
@@ -559,10 +590,10 @@ async function tampilkanRekap() {
 }
 
 // ==========================================
-// 📄 EXPORT PDF
+// 📄 EXPORT PDF — HANYA DI REKAP
 // ==========================================
-document.getElementById('btnPDF').addEventListener('click', async () => {
-    const btn = document.getElementById('btnPDF');
+btnPDF.addEventListener('click', async () => {
+    const btn = btnPDF;
     btn.textContent = "⏳ Membuat PDF..."; btn.disabled = true;
 
     const { jsPDF } = window.jspdf;
@@ -732,7 +763,6 @@ document.getElementById('btnKonfirmasiAksi').addEventListener('click', async () 
     document.getElementById('modalSandi').classList.remove('show');
     
     const periode = document.getElementById('monthSelect').value;
-    const namaPeriode = document.getElementById('monthSelect').options[document.getElementById('monthSelect').selectedIndex].text;
 
     if (tindakanLulus === 'resetBlok') {
         if (!bolehUbahBlok(currentBlok)) { alert('❌ Bukan blok Anda!'); return; }
@@ -747,7 +777,7 @@ document.getElementById('btnKonfirmasiAksi').addEventListener('click', async () 
     if (tindakanLulus === 'resetBulan') {
         const snap = await db.collection('iuran').where('periode', '==', periode).get();
         await Promise.all(snap.docs.map(d => d.ref.delete()));
-        alert(`✅ Semua data ${namaPeriode} dihapus`);
+        alert(`✅ Semua data dihapus`);
     }
     tindakanLulus = null;
 });
