@@ -1,724 +1,438 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iuran Perumahan Paradise Residence 4</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iuran Perumahan Paradise Residence 4</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg-body: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-subcard: #f8fafc;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --input-bg: #ffffff;
+    }
+
+    body.dark {
+      --bg-body: #0f172a;
+      --bg-card: #1e293b;
+      --bg-subcard: #334155;
+      --text-main: #ffffff;
+      --text-muted: #cbd5e1;
+      --border-color: #334155;
+      --input-bg: #1e293b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; transition: background-color 0.2s, color 0.2s; }
+    body { background-color: var(--bg-body); color: var(--text-main); padding-bottom: 40px; }
+
+    /* Top Bar Header */
+    .top-bar { max-width: 600px; margin: 0 auto; padding: 12px 16px; display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+    .top-bar-left, .top-bar-right { display: flex; gap: 8px; align-items: center; }
     
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    .badge-user { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
     
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
-        
-        :root {
-            --hijau: #34c759; --merah: #ff3b30; --biru: #007aff; --oranye: #ff9500;
-            --abu: #e5e5e7; --gelap: #1d1d1f; --putih: #ffffff; --latar: #f2f2f7;
-            --kartu: #ffffff; --teks: #1d1d1f; --batas: #e5e5e7;
-            --bayangan: rgba(0,0,0,0.06);
-        }
-        
-        .mode-gelap {
-            --abu: #2c2c2e; --gelap: #f5f5f7; --putih: #1c1c1e; --latar: #000000;
-            --kartu: #1c1c1e; --teks: #f5f5f7; --batas: #38383a;
-            --bayangan: rgba(0,0,0,0.3);
-        }
-        
-        body { 
-            background: var(--latar); color: var(--teks);
-            padding: 16px; max-width: 960px; margin: 0 auto;
-            transition: background 0.3s, color 0.3s;
-        }
-        
-        .identitas {
-            background: linear-gradient(135deg, var(--biru), #005fcc); color: #fff;
-            padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0,122,255,0.2);
-        }
-        .identitas h1 { font-size: 20px; font-weight: 700; line-height: 1.3; margin-bottom: 6px; }
-        .identitas .alamat { font-size: 14px; opacity: 0.95; }
-        .status-sinkron {
-            font-size: 12px; margin-top: 10px; padding: 5px 12px; border-radius: 20px; display: inline-block;
-        }
-        .status-sinkron.terhubung { background: #d1fae5; color: #065f46; font-weight: 500; }
-        .status-sinkron.terputus { background: #fee2e2; color: #991b1b; }
-        
-        .baris-atas { 
-            display: flex; justify-content: space-between; align-items: center; 
-            margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
-        }
-        .kelompok-kiri { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .info-petugas { font-size: 13px; font-weight: 500; padding: 6px 12px; background: var(--kartu); border-radius: 10px; }
-        
-        .btn-mode, .btn-reload, .btn-logout { 
-            background: var(--kartu); border: none; padding: 6px 12px; border-radius: 8px;
-            cursor: pointer; font-size: 13px; box-shadow: 0 2px 6px var(--bayangan);
-            width: auto; display: inline-flex; align-items: center; gap: 4px;
-            white-space: nowrap;
-        }
-        .btn-logout { background: var(--merah); color: #fff; }
-        .btn-reload { background: var(--biru); color: #fff; }
-        
-        .header {
-            background: var(--kartu); padding: 16px; border-radius: 16px;
-            box-shadow: 0 2px 12px var(--bayangan); margin-bottom: 16px;
-        }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
-        select {
-            padding: 8px 12px; border-radius: 10px; border: 1px solid var(--batas);
-            font-size: 14px; background: var(--kartu); color: var(--teks); min-width: 160px;
-        }
-        .legend { display: flex; gap: 16px; font-size: 13px; flex-wrap: wrap; }
-        .legend span { display: flex; align-items: center; gap: 5px; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-        .dot.paid { background: var(--hijau); }
-        .dot.unpaid { background: var(--merah); }
-        .tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-        .tab {
-            padding: 10px 16px; border-radius: 12px 12px 0 0; background: var(--abu);
-            border: none; cursor: pointer; font-weight: 600; font-size: 13px; transition: all 0.2s;
-            color: var(--teks);
-        }
-        .tab:hover { opacity: 0.8; }
-        .tab.active { background: var(--kartu); box-shadow: 0 -3px 0 var(--biru); color: var(--biru); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-        .box {
-            background: var(--kartu); border-radius: 12px; padding: 14px 8px; text-align: center;
-            cursor: pointer; border: 2px solid transparent; transition: all 0.25s;
-            box-shadow: 0 2px 6px var(--bayangan); min-height: 75px;
-        }
-        .box:active { transform: scale(0.97); }
-        .box.unpaid { background: rgba(255,59,48,0.08); border-color: var(--merah); }
-        .box.paid { background: rgba(52,199,89,0.08); border-color: var(--hijau); }
-        .box .id { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
-        .box .date { font-size: 11px; color: #8e8e93; }
-        .rekap-card {
-            background: var(--kartu); border-radius: 16px; padding: 20px;
-            box-shadow: 0 2px 12px var(--bayangan);
-        }
-        .rekap-card h2 { font-size: 17px; margin-bottom: 16px; }
-        .rekap-baris {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px 0; border-bottom: 1px solid var(--batas); font-size: 14px;
-        }
-        .rekap-baris:last-child { border-bottom: none; }
-        .rekap-baris.total {
-            font-weight: 700; font-size: 16px; border-top: 2px solid var(--biru);
-            padding-top: 12px; margin-top: 4px;
-        }
-        .uang { font-weight: 600; color: var(--biru); }
-        .uang.besar { font-size: 18px; color: #0066cc; }
-        .ket { font-size: 12px; color: #8e8e93; margin-top: 4px; margin-bottom: 12px; }
-        
-        .notifikasi {
-            position: fixed; top: 15px; right: 15px; background: var(--kartu);
-            padding: 12px 16px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            z-index: 9999; transform: translateX(120%); transition: transform 0.3s;
-            max-width: 280px; font-size: 13px;
-        }
-        .notifikasi.tampil { transform: translateX(0); }
-        
-        .daftar-riwayat { margin-top: 12px; max-height: 250px; overflow-y: auto; }
-        .item-riwayat {
-            padding: 12px; border-bottom: 1px solid var(--batas); font-size: 14px;
-        }
-        .item-riwayat:last-child { border-bottom: none; }
-        .item-riwayat .waktu { color: #888; font-size: 12px; margin-top: 4px; }
-        .item-riwayat .nama { font-weight: 600; margin-bottom: 2px; }
-        
-        .modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none;
-            align-items: center; justify-content: center; padding: 20px; z-index: 999;
-        }
-        .modal.show { display: flex; }
-        .modal-content {
-            background: var(--kartu); padding: 24px; border-radius: 20px; width: 100%;
-            max-width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        }
-        .modal-content h3 { margin-bottom: 16px; font-size: 17px; font-weight: 600; text-align: center; }
-        .modal-content p { text-align: center; margin-bottom: 16px; font-size: 14px; line-height: 1.5; }
-        input {
-            width: 100%; padding: 12px; margin-bottom: 14px;
-            border: 1px solid var(--batas); border-radius: 10px; font-size: 15px;
-            background: var(--putih); color: var(--teks);
-        }
-        .btn-group { display: flex; gap: 10px; }
-        button {
-            flex: 1; padding: 11px; border: none; border-radius: 10px;
-            font-size: 14px; cursor: pointer; font-weight: 600; transition: all 0.2s;
-        }
-        .btn-cancel { background: var(--abu); color: var(--teks); }
-        .btn-save { background: var(--biru); color: #fff; }
-        .btn-delete { background: var(--merah); color: #fff; margin-top: 10px; width: 100%; }
-        .btn-pass-ok { background: var(--biru); color: #fff; margin-top: 8px; width: 100%; }
-        .btn-riwayat { background: var(--abu); color: var(--teks); margin-top: 10px; width: 100%; }
-        .bawah-tombol { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .bawah-tombol button { flex: 1; min-width: 120px; }
-        #btnPDF { background: var(--hijau); color: #fff; display: none; }
-        #btnPDF.tampil { display: block; }
-        .btn-reset-blok { background: var(--oranye); color: #fff; }
-        .btn-reset-bulan { background: var(--merah); color: #fff; }
-        .stat-bar { display: flex; gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--batas); flex-wrap: wrap; font-size: 13px; }
-        .stat-item b { color: var(--biru); }
-        .memuat { text-align: center; padding: 30px; color: #888; font-size: 14px; }
-        .halaman-login {
-            display: flex; align-items: center; justify-content: center; min-height: 80vh;
-        }
-        .kotak-login {
-            background: var(--kartu); padding: 28px; border-radius: 20px; box-shadow: 0 4px 20px var(--bayangan);
-            width: 100%; max-width: 340px; text-align: center;
-        }
-        .kotak-login h2 { margin-bottom: 20px; font-size: 18px; }
-        .sembunyi { display: none !important; }
-        
-        @media (max-width: 400px) {
-            .grid { gap: 8px; }
-            .box { padding: 12px 4px; min-height: 65px; }
-            .box .id { font-size: 16px; }
-            .tabs { gap: 4px; }
-            .tab { padding: 8px 12px; font-size: 12px; }
-        }
-    </style>
+    .btn-top { border: none; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+    .btn-dark-toggle { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); }
+    .btn-refresh { background: #2563eb; color: #ffffff; }
+    .btn-logout { background: #ef4444; color: #ffffff; }
+    .btn-settings { background: #475569; color: #ffffff; border-radius: 50%; width: 32px; height: 32px; justify-content: center; font-size: 14px; }
+
+    /* Main Container */
+    .app-container { max-width: 600px; margin: 0 auto; padding: 0 16px; }
+
+    /* Banner Banner Header */
+    .hero-banner { background: linear-gradient(135deg, #0284c7, #2563eb); color: #ffffff; padding: 20px 16px; border-radius: 16px; text-align: center; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+    .hero-banner h1 { font-size: 16px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+    .hero-banner h2 { font-size: 14px; font-weight: 700; margin-top: 2px; text-transform: uppercase; }
+    .hero-banner p { font-size: 11px; opacity: 0.9; margin-top: 4px; }
+    .badge-status { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 12px; font-size: 11px; margin-top: 10px; font-weight: 600; }
+
+    /* Controls & Tabs Card */
+    .control-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+    .period-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .period-row label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    .period-row input { background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; outline: none; }
+    
+    .legend-box { display: flex; gap: 12px; align-items: center; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-green { background: #22c55e; }
+    .dot-red { background: #ef4444; }
+
+    /* Tabs */
+    .tab-container { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; }
+    .tab-btn { flex: 1; min-width: 70px; border: none; background: var(--bg-subcard); color: var(--text-muted); padding: 10px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; }
+    .tab-btn.active { background: #ffffff; color: #2563eb; border: 2px solid #2563eb; }
+    body.dark .tab-btn.active { background: #1e293b; color: #38bdf8; border-color: #38bdf8; }
+
+    .summary-text { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    .summary-text span.green { color: #22c55e; }
+    .summary-text span.blue { color: #2563eb; }
+    body.dark .summary-text span.blue { color: #38bdf8; }
+
+    /* Grid Rumah */
+    .grid-houses { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .house-box {
+      border-radius: 12px;
+      padding: 10px 2px;
+      text-align: center;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 65px;
+      user-select: none;
+    }
+    .house-box:active { transform: scale(0.95); }
+
+    /* Style Belum Bayar */
+    .house-box.red { border: 1.5px solid #fca5a5; background-color: #fef2f2; }
+    .house-box.red .num { font-size: 15px; font-weight: 800; color: #0f172a; }
+    .house-box.red .status { font-size: 9px; color: #991b1b; font-weight: 600; margin-top: 2px; }
+
+    body.dark .house-box.red { border-color: #991b1b; background-color: #451a1a; }
+    body.dark .house-box.red .num { color: #ffffff; }
+    body.dark .house-box.red .status { color: #fca5a5; }
+
+    /* Style Lunas */
+    .house-box.green { border: 1.5px solid #86efac; background-color: #f0fdf4; }
+    .house-box.green .num { font-size: 15px; font-weight: 800; color: #0f172a; }
+    .house-box.green .status { font-size: 9px; color: #166534; font-weight: 700; margin-top: 2px; }
+
+    body.dark .house-box.green { border-color: #166534; background-color: #143821; }
+    body.dark .house-box.green .num { color: #ffffff; }
+    body.dark .house-box.green .status { color: #86efac; }
+
+    /* Modal Overlay */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); z-index: 100; align-items: center; justify-content: center; padding: 16px; }
+    .modal-card { background: var(--bg-card); color: var(--text-main); width: 100%; max-width: 380px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border-color); }
+    .modal-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+    .modal-card label { font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px; }
+    .modal-card input, .modal-card select { width: 100%; padding: 10px; background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; margin-bottom: 12px; outline: none; }
+    
+    .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+    .btn { padding: 10px; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; text-align: center; }
+    .btn-save { background: #22c55e; color: #ffffff; }
+    .btn-reset { background: #fee2e2; color: #dc2626; }
+    body.dark .btn-reset { background: #451a1a; color: #fca5a5; }
+    .btn-cancel { background: var(--bg-subcard); color: var(--text-muted); }
+
+    /* User List Table in Settings */
+    .user-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 12px; }
+    .user-table th, .user-table td { border: 1px solid var(--border-color); padding: 8px; text-align: left; }
+    .user-table th { background: var(--bg-subcard); color: var(--text-main); }
+    .btn-del { background: #ef4444; color: #fff; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 10px; }
+  </style>
 </head>
 <body>
 
-<div class="notifikasi" id="kotakNotifikasi">
-    <h4 id="notifJudul" style="font-size:13px; margin-bottom:2px;"></h4>
-    <p id="notifIsi"></p>
-</div>
-
-<div class="halaman-login" id="halamanLogin">
-    <div class="kotak-login">
-        <h2>🔐 Masuk Sistem Iuran</h2>
-        <input type="text" id="inputPengguna" placeholder="Nama Pengguna">
-        <input type="password" id="inputSandiLogin" placeholder="Kata Sandi">
-        <button class="btn-save" id="btnMasuk">Masuk</button>
-        <p style="margin-top: 14px; font-size: 12px; color: #888; line-height:1.5;">
-            Petugas A/B/C/D → 1234 + Huruf<br>Admin: 12345
-        </p>
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="top-bar-left">
+      <div class="badge-user">
+        👤 <span id="displayUser">Administrator</span>
+      </div>
     </div>
-</div>
+    <div class="top-bar-right">
+      <button class="btn-top btn-dark-toggle" onclick="toggleDarkMode()">
+        <span id="darkIcon">🌙</span> <span id="darkText">Gelap</span>
+      </button>
+      <button class="btn-top btn-refresh" onclick="renderGrid()">Segarkan</button>
+      <button class="btn-top btn-logout" onclick="logout()">Keluar</button>
+      <!-- Tombol Gear Pengaturan Khusus Admin -->
+      <button id="btnGear" class="btn-top btn-settings" onclick="openSettingsModal()" style="display: none;" title="Pengaturan Petugas">⚙️</button>
+    </div>
+  </div>
 
-<div id="halamanUtama" class="sembunyi">
-    <div class="baris-atas">
-        <div class="kelompok-kiri">
-            <span class="info-petugas" id="infoPetugas"></span>
-            <button class="btn-mode" id="btnMode">🌙 Gelap</button>
-            <button class="btn-reload" id="btnReload">🔄 Segarkan</button>
+  <div class="app-container">
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+      <h1>Iuran Rutin</h1>
+      <h2>Perumahan Paradise Residence 4</h2>
+      <p>JL. HAJI UMAR — KAMPAK — PANGKALPINANG</p>
+      <div class="badge-status">✓ Terhubung & Terbaru</div>
+    </div>
+
+    <!-- Controls -->
+    <div class="control-card">
+      <div class="period-row">
+        <label for="monthPicker">Periode:</label>
+        <input type="month" id="monthPicker">
+        <div class="legend-box">
+          <div class="legend-item"><span class="dot dot-green"></span> Sudah</div>
+          <div class="legend-item"><span class="dot dot-red"></span> Belum</div>
         </div>
-        <button class="btn-logout" id="btnLogout">Keluar</button>
+      </div>
+
+      <!-- Tab Blok -->
+      <div class="tab-container" id="tabContainer"></div>
+
+      <!-- Summary -->
+      <div class="summary-text" id="summaryText">Sudah: 0/50 &nbsp; Belum: 50/50</div>
     </div>
 
-    <div class="identitas">
-        <h1>IURAN RUTIN<br>PERUMAHAN PARADISE RESIDENCE 4</h1>
-        <p class="alamat">JL. HAJI UMAR — KAMPAK - PANGKALPINANG</p>
-        <span class="status-sinkron" id="statusFirebase">🔄 Memuat...</span>
-    </div>
+    <!-- Grid 50 Rumah -->
+    <div class="grid-houses" id="gridContainer"></div>
+  </div>
 
-    <div class="header">
-        <div class="top-bar">
-            <label style="font-size:14px;">Periode:
-                <select id="monthSelect"></select>
-            </label>
-            <div class="legend">
-                <span><span class="dot paid"></span> Sudah</span>
-                <span><span class="dot unpaid"></span> Belum</span>
-            </div>
+  <!-- Modal Pilih Tanggal Bayar -->
+  <div id="paymentModal" class="modal-overlay">
+    <div class="modal-card">
+      <h3 id="modalTitle">Rumah A1</h3>
+      <label for="payDate">Tanggal Bayar:</label>
+      <input type="date" id="payDate">
+
+      <div class="btn-group">
+        <button class="btn btn-save" onclick="savePayment()">Simpan (Set Lunas)</button>
+        <button id="btnReset" class="btn btn-reset" onclick="resetPayment()">Batal Lunas (Set Belum)</button>
+        <button class="btn btn-cancel" onclick="closeModal('paymentModal')">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Pengaturan Akun Petugas (Khusus Admin) -->
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal-card">
+      <h3>⚙️ Pengaturan Akun Petugas</h3>
+      
+      <!-- Tabel Akun -->
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody"></tbody>
+      </table>
+
+      <!-- Form Tambah/Ubah User -->
+      <div style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 10px;">
+        <label for="newUsername">Username Baru / Edit:</label>
+        <input type="text" id="newUsername" placeholder="Contoh: Petugas Blok C">
+
+        <label for="newPassword">Password:</label>
+        <input type="password" id="newPassword" placeholder="Masukkan password">
+
+        <label for="newRole">Role Akses:</label>
+        <select id="newRole">
+          <option value="Petugas">Petugas</option>
+          <option value="Administrator">Administrator</option>
+        </select>
+
+        <div class="btn-group">
+          <button class="btn btn-save" onclick="saveUser()">Simpan Akun</button>
+          <button class="btn btn-cancel" onclick="closeModal('settingsModal')">Tutup</button>
         </div>
-
-        <div class="tabs" id="tabs">
-            <button class="tab active" data-tab="blok" data-blok="A">Blok A</button>
-            <button class="tab" data-tab="blok" data-blok="B">Blok B</button>
-            <button class="tab" data-tab="blok" data-blok="C">Blok C</button>
-            <button class="tab" data-tab="blok" data-blok="D">Blok D</button>
-            <button class="tab" data-tab="rekap">📊 Rekap</button>
-        </div>
-
-        <div class="tab-content active" id="kontenBlok">
-            <div class="stat-bar">
-                <div class="stat-item">Sudah: <b id="jmlSudah">0</b>/50</div>
-                <div class="stat-item">Belum: <b id="jmlBelum">0</b>/50</div>
-            </div>
-        </div>
+      </div>
     </div>
+  </div>
 
-    <div class="tab-content active" id="kontenGrid">
-        <div class="grid" id="gridContainer">
-            <div class="memuat">🔄 Memuat data...</div>
-        </div>
-    </div>
+  <script>
+    // Data Pengguna Bawaan
+    const defaultUsers = [
+      { username: 'Administrator', password: 'adminpassword', role: 'Administrator' },
+      { username: 'Petugas Blok A', password: 'user123', role: 'Petugas' },
+      { username: 'Petugas Blok B', password: 'user123', role: 'Petugas' }
+    ];
 
-    <div class="tab-content" id="kontenRekap">
-        <div class="rekap-card">
-            <h2>📊 Rekapitulasi — <span id="namaBulan"></span></h2>
-            <p class="ket">Iuran per rumah: <strong>Rp 10.000</strong></p>
-            <div id="rekapPerBlok">
-                <div class="memuat">Memuat rekap...</div>
-            </div>
-            <div class="rekap-baris total">
-                <span>💰 TOTAL SEMUA</span>
-                <span class="uang besar" id="totalSemuaBlok">Rp 0</span>
-            </div>
-        </div>
-    </div>
+    let users = JSON.parse(localStorage.getItem('iuran_users')) || defaultUsers;
+    let currentUser = JSON.parse(sessionStorage.getItem('current_user')) || { username: 'Administrator', role: 'Administrator' };
 
-    <div class="bawah-tombol">
-        <button id="btnPDF">📄 Export PDF</button>
-        <button id="btnUrung" class="btn-reset-blok">⚠️ Urung Blok</button>
-        <button id="btnResetBulan" class="btn-reset-bulan">🗑️ Reset Bulan</button>
-    </div>
+    // Data Rumah
+    const HOUSING_DATA = {
+      'Blok A': Array.from({ length: 50 }, (_, i) => `A${i + 1}`),
+      'Blok B': Array.from({ length: 50 }, (_, i) => `B${i + 1}`),
+      'Blok C': Array.from({ length: 50 }, (_, i) => `C${i + 1}`),
+      'Blok D': Array.from({ length: 50 }, (_, i) => `D${i + 1}`)
+    };
 
-    <div class="modal" id="modalBayar">
-        <div class="modal-content">
-            <h3 id="modalJudul">Pilih Tanggal Bayar</h3>
-            <input type="date" id="tglBayar">
-            <div class="btn-group">
-                <button class="btn-cancel" id="btnBatal">Batal</button>
-                <button class="btn-save" id="btnSimpan">Simpan</button>
-            </div>
-            <button class="btn-delete" id="btnHapus">Hapus Status Bayar</button>
-            <button class="btn-riwayat" id="btnLihatRiwayat">📋 Lihat Riwayat</button>
-        </div>
-    </div>
+    let activeBlock = 'Blok A';
+    let records = JSON.parse(localStorage.getItem('iuran_data') || '{}');
+    let selectedHouse = null;
 
-    <div class="modal" id="modalRiwayat">
-        <div class="modal-content">
-            <h3 id="judulRiwayat">Riwayat Perubahan</h3>
-            <div class="daftar-riwayat" id="daftarRiwayat">
-                <div class="memuat">Memuat...</div>
-            </div>
-            <button class="btn-cancel" style="margin-top: 14px; width:100%;" id="btnTutupRiwayat">Tutup</button>
-        </div>
-    </div>
+    const monthPicker = document.getElementById('monthPicker');
+    const today = new Date();
+    monthPicker.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
-    <div class="modal" id="modalSandi">
-        <div class="modal-content">
-            <h3>🔐 Konfirmasi</h3>
-            <p style="font-size: 14px; margin-bottom: 12px; text-align:center;" id="teksKonfirmasi"></p>
-            <input type="password" id="inputSandiAksi" placeholder="Kata sandi">
-            <div class="btn-group">
-                <button class="btn-cancel" id="btnBatalAksi">Batal</button>
-                <button class="btn-pass-ok" id="btnKonfirmasiAksi">Lanjutkan</button>
-            </div>
-        </div>
-    </div>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set Mode Gelap jika sebelumnya aktif
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark');
+        document.getElementById('darkIcon').innerText = '☀️';
+        document.getElementById('darkText').innerText = 'Terang';
+      }
 
-    <div class="modal" id="modalKonfirmasiPDF">
-        <div class="modal-content">
-            <h3>📄 Konfirmasi Export PDF</h3>
-            <p>Buat unduhan laporan rekapitulasi iuran bulan ini?</p>
-            <div class="btn-group">
-                <button class="btn-cancel" id="btnBatalPDF">Batal</button>
-                <button class="btn-save" id="btnKonfirmasiPDF">Ya, Export</button>
-            </div>
-        </div>
-    </div>
-</div>
+      // Check Role User
+      document.getElementById('displayUser').innerText = currentUser.username;
+      if (currentUser.role === 'Administrator') {
+        document.getElementById('btnGear').style.display = 'flex';
+      }
 
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBy6wCCaiUzTjkJ_NnnCwFSE7Ui0V2jUKE",
-  authDomain: "iuran-perumahan.firebaseapp.com",
-  projectId: "iuran-perumahan",
-  storageBucket: "iuran-perumahan.firebasestorage.app",
-  messagingSenderId: "815498403579",
-  appId: "1:815498403579:web:6d5fbbbc1b4dd0b05a5a5e",
-  measurementId: "G-6Q3QCQZ39V"
-};
-
-const DAFTAR_PETUGAS = {
-    petugasA: { sandi: "1234A", nama: "Petugas Blok A", blok: "A" },
-    petugasB: { sandi: "1234B", nama: "Petugas Blok B", blok: "B" },
-    petugasC: { sandi: "1234C", nama: "Petugas Blok C", blok: "C" },
-    petugasD: { sandi: "1234D", nama: "Petugas Blok D", blok: "D" },
-    admin:    { sandi: "12345", nama: "Administrator", blok: "SEMUA" }
-};
-
-const IURAN_PER_RUMAH = 10000;
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-let penggunaSaatIni = null;
-let currentBlok = 'A';
-let currentTab = 'blok';
-let currentIndex = null;
-let pembayaranRealtime = {};
-let pendengarPerubahan = null;
-let sedangProsesPDF = false;
-
-const halamanLogin = document.getElementById('halamanLogin');
-const halamanUtama = document.getElementById('halamanUtama');
-const infoPetugasEl = document.getElementById('infoPetugas');
-const btnMode = document.getElementById('btnMode');
-const btnPDF = document.getElementById('btnPDF');
-
-function formatRupiah(angka) {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-}
-
-function formatTanggal(ts) {
-    if (!ts) return '-';
-    const d = ts.toDate ? ts.toDate() : new Date(ts);
-    return d.toLocaleDateString('id-ID') + ' ' + d.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
-}
-
-function aturTema() {
-    const gelap = localStorage.getItem('tema') === 'gelap';
-    document.body.classList.toggle('mode-gelap', gelap);
-    btnMode.textContent = gelap ? '☀️ Terang' : '🌙 Gelap';
-}
-btnMode.addEventListener('click', () => {
-    const mauGelap = !document.body.classList.contains('mode-gelap');
-    document.body.classList.toggle('mode-gelap', mauGelap);
-    localStorage.setItem('tema', mauGelap ? 'gelap' : 'terang');
-    btnMode.textContent = mauGelap ? '☀️ Terang' : '🌙 Gelap';
-});
-aturTema();
-
-document.getElementById('btnMasuk').addEventListener('click', () => {
-    const pengguna = document.getElementById('inputPengguna').value.trim();
-    const sandi = document.getElementById('inputSandiLogin').value;
-    if (DAFTAR_PETUGAS[pengguna] && DAFTAR_PETUGAS[pengguna].sandi === sandi) {
-        penggunaSaatIni = { id: pengguna, ...DAFTAR_PETUGAS[pengguna] };
-        halamanLogin.classList.add('sembunyi');
-        halamanUtama.classList.remove('sembunyi');
-        infoPetugasEl.textContent = `👤 ${penggunaSaatIni.nama}`;
-        isiPilihanBulan();
-        tampilkanGrid();
-    } else {
-        alert('❌ Nama pengguna atau kata sandi salah!');
-    }
-});
-
-document.getElementById('btnLogout').addEventListener('click', () => {
-    if (confirm('Yakin ingin keluar?')) {
-        penggunaSaatIni = null;
-        halamanUtama.classList.add('sembunyi');
-        halamanLogin.classList.remove('sembunyi');
-        document.getElementById('inputPengguna').value = '';
-        document.getElementById('inputSandiLogin').value = '';
-        if (pendengarPerubahan) pendengarPerubahan();
-    }
-});
-
-function tampilkanNotifikasi(judul, isi) {
-    const kotak = document.getElementById('kotakNotifikasi');
-    document.getElementById('notifJudul').textContent = judul;
-    document.getElementById('notifIsi').textContent = isi;
-    kotak.classList.add('tampil');
-    setTimeout(() => kotak.classList.remove('tampil'), 3500);
-}
-
-function isiPilihanBulan() {
-    const daftarBulan = [];
-    const sekarang = new Date();
-    for (let thn = sekarang.getFullYear() - 1; thn <= sekarang.getFullYear() + 1; thn++) {
-        for (let bln = 1; bln <= 12; bln++) {
-            daftarBulan.push(`${thn}-${String(bln).padStart(2,'0')}`);
-        }
-    }
-    document.getElementById('monthSelect').innerHTML = daftarBulan.map(kode => {
-        const [thn, bln] = kode.split('-');
-        const nama = new Date(thn, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-        return `<option value="${kode}">${nama}</option>`;
-    }).join('');
-    const kodeSekarang = `${sekarang.getFullYear()}-${String(sekarang.getMonth() + 1).padStart(2,'0')}`;
-    document.getElementById('monthSelect').value = kodeSekarang;
-}
-
-function bolehUbahBlok(blok) {
-    return penggunaSaatIni.blok === blok || penggunaSaatIni.blok === 'SEMUA';
-}
-
-function mulaiDengarPerubahan(periode, blok) {
-    if (pendengarPerubahan) pendengarPerubahan();
-    document.getElementById('statusFirebase').textContent = "🔄 Memuat...";
-    document.getElementById('statusFirebase').className = "status-sinkron";
-
-    pendengarPerubahan = db.collection('iuran')
-        .where('periode', '==', periode)
-        .where('blok', '==', blok)
-        .onSnapshot(snapshot => {
-            pembayaranRealtime = {};
-            snapshot.forEach(doc => {
-                const d = doc.data();
-                pembayaranRealtime[d.noRumah] = {
-                    tanggal: d.tanggal,
-                    namaPengguna: d.namaPengguna || '-',
-                    waktuDiubah: d.waktuDiubah
-                };
-            });
-            document.getElementById('statusFirebase').textContent = "✓ Terhubung & Terbaru";
-            document.getElementById('statusFirebase').className = "status-sinkron terhubung";
-            tampilkanGridDariData();
-        }, err => {
-            console.error(err);
-            document.getElementById('statusFirebase').textContent = "⚠️ Terputus";
-            document.getElementById('statusFirebase').className = "status-sinkron terputus";
-        });
-}
-
-async function simpanKeFirebase(periode, blok, noRumah, tanggal) {
-    if (!bolehUbahBlok(blok)) { alert('❌ Bukan blok Anda!'); return; }
-    const noRumahPenuh = `${blok}${noRumah}`;
-    const kunci = `${periode}-${noRumahPenuh}`;
-    const ref = db.collection('iuran').doc(kunci);
-    if (tanggal) {
-        await ref.set({
-            periode, blok, noRumah: noRumahPenuh, tanggal,
-            namaPengguna: penggunaSaatIni.nama,
-            diubahOleh: penggunaSaatIni.id,
-            waktuDiubah: firebase.firestore.FieldValue.serverTimestamp()
-        });
-    } else {
-        await ref.delete();
-    }
-}
-
-function tampilkanGridDariData() {
-    const wadah = document.getElementById('gridContainer');
-    wadah.innerHTML = '';
-    let sudah = 0, belum = 0;
-    for (let no = 1; no <= 50; no++) {
-        const noRumah = `${currentBlok}${no}`;
-        const info = pembayaranRealtime[noRumah];
-        info ? sudah++ : belum++;
-        const kotak = document.createElement('div');
-        kotak.className = `box ${info ? 'paid' : 'unpaid'}`;
-        kotak.innerHTML = `<div class="id">${noRumah}</div><div class="date">${info ? info.tanggal : 'Belum Bayar'}</div>`;
-        kotak.addEventListener('click', () => bukaModalBayar(no, document.getElementById('monthSelect').value));
-        wadah.appendChild(kotak);
-    }
-    document.getElementById('jmlSudah').textContent = sudah;
-    document.getElementById('jmlBelum').textContent = belum;
-}
-
-function tampilkanGrid() {
-    btnPDF.classList.remove('tampil');
-    mulaiDengarPerubahan(document.getElementById('monthSelect').value, currentBlok);
-}
-
-async function tampilkanRekap() {
-    btnPDF.classList.add('tampil');
-    const periode = document.getElementById('monthSelect').value;
-    const [thn, bln] = periode.split('-');
-    document.getElementById('namaBulan').textContent = new Date(thn, bln - 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-    let totalSemua = 0, html = '';
-    for (const blok of ['A','B','C','D']) {
-        const snap = await db.collection('iuran').where('periode','==',periode).where('blok','==',blok).get();
-        const sudah = snap.size;
-        const jumlah = sudah * IURAN_PER_RUMAH;
-        totalSemua += jumlah;
-        html += `<div class="rekap-baris"><span>Blok ${blok} — ${sudah}/50</span><span class="uang">${formatRupiah(jumlah)}</span></div>`;
-    }
-    document.getElementById('rekapPerBlok').innerHTML = html;
-    document.getElementById('totalSemuaBlok').textContent = formatRupiah(totalSemua);
-}
-
-// === KONFIRMASI PDF ===
-btnPDF.addEventListener('click', () => {
-    if (sedangProsesPDF) return;
-    document.getElementById('modalKonfirmasiPDF').classList.add('show');
-});
-
-document.getElementById('btnBatalPDF').addEventListener('click', () => {
-    document.getElementById('modalKonfirmasiPDF').classList.remove('show');
-});
-
-document.getElementById('btnKonfirmasiPDF').addEventListener('click', async () => {
-    document.getElementById('modalKonfirmasiPDF').classList.remove('show');
-    sedangProsesPDF = true;
-    
-    const btn = btnPDF;
-    btn.textContent = "⏳ Membuat..."; btn.disabled = true;
-    
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.setFontSize(17);
-    doc.text("IURAN RUTIN - PARADISE RESIDENCE 4", 105, 22, { align: 'center' });
-    doc.setFontSize(11);
-    doc.text("JL. HAJI UMAR — KAMPAK - PANGKALPINANG", 105, 32, { align: 'center' });
-    doc.text("Periode: " + document.getElementById('namaBulan').textContent, 105, 42, { align: 'center' });
-    doc.text("Iuran per rumah: Rp 10.000", 105, 50, { align: 'center' });
-    let y = 62;
-    document.querySelectorAll('#rekapPerBlok .rekap-baris').forEach(b => {
-        doc.text(b.querySelector('span:first-child').textContent, 20, y);
-        doc.text(b.querySelector('.uang').textContent, 190, y, { align: 'right' });
-        y += 9;
+      renderTabs();
+      renderGrid();
+      monthPicker.addEventListener('change', renderGrid);
     });
-    doc.setFontSize(13); doc.setFont('helvetica', 'bold');
-    doc.text("TOTAL SEMUA BLOK", 20, y+8);
-    doc.text(document.getElementById('totalSemuaBlok').textContent, 190, y+8, { align: 'right' });
-    doc.setFontSize(10); doc.setFont('helvetica', 'normal');
-    doc.text("Dicetak: " + penggunaSaatIni.nama, 20, y+25);
-    doc.text(new Date().toLocaleString('id-ID'), 190, y+25, { align: 'right' });
-    doc.save(`IURAN-${document.getElementById('monthSelect').value}.pdf`);
-    
-    btn.textContent = "📄 Export PDF"; btn.disabled = false;
-    sedangProsesPDF = false;
-    tampilkanNotifikasi('✅ Selesai', 'PDF sudah terunduh');
-});
 
-document.getElementById('tabs').addEventListener('click', e => {
-    if (!e.target.classList.contains('tab')) return;
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    e.target.classList.add('active');
-    const jns = e.target.dataset.tab;
-    currentTab = jns;
-    document.getElementById('kontenGrid').classList.remove('active');
-    document.getElementById('kontenRekap').classList.remove('active');
-    document.getElementById('kontenBlok').classList.remove('active');
-    if (jns === 'blok') {
-        currentBlok = e.target.dataset.blok;
-        document.getElementById('kontenGrid').classList.add('active');
-        document.getElementById('kontenBlok').classList.add('active');
-        tampilkanGrid();
-    } else {
-        document.getElementById('kontenRekap').classList.add('active');
-        tampilkanRekap();
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+      document.body.classList.toggle('dark');
+      const isDark = document.body.classList.contains('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      document.getElementById('darkIcon').innerText = isDark ? '☀️' : '🌙';
+      document.getElementById('darkText').innerText = isDark ? 'Terang' : 'Gelap';
     }
-});
 
-function bukaModalBayar(no, periode) {
-    if (!bolehUbahBlok(currentBlok)) { alert(`🔒 Anda hanya bertugas di Blok ${penggunaSaatIni.blok}`); return; }
-    currentIndex = { no, periode };
-    const noRumah = `${currentBlok}${no}`;
-    document.getElementById('modalJudul').textContent = `${noRumah} — Tanggal Bayar`;
-    document.getElementById('tglBayar').value = pembayaranRealtime[noRumah]?.tanggal || '';
-    document.getElementById('modalBayar').classList.add('show');
-}
-document.getElementById('btnBatal').addEventListener('click', () => {
-    document.getElementById('modalBayar').classList.remove('show');
-});
-document.getElementById('btnSimpan').addEventListener('click', async () => {
-    if (!document.getElementById('tglBayar').value) { alert('Pilih tanggal dulu!'); return; }
-    const btn = document.getElementById('btnSimpan');
-    btn.disabled = true; btn.textContent = "Menyimpan...";
-    await simpanKeFirebase(currentIndex.periode, currentBlok, currentIndex.no, document.getElementById('tglBayar').value);
-    btn.disabled = false; btn.textContent = "Simpan";
-    document.getElementById('modalBayar').classList.remove('show');
-});
-document.getElementById('btnHapus').addEventListener('click', () => {
-    if (!confirm('Yakin hapus?')) return;
-    simpanKeFirebase(currentIndex.periode, currentBlok, currentIndex.no, null);
-    document.getElementById('modalBayar').classList.remove('show');
-});
-
-// RIWAYAT
-document.getElementById('btnLihatRiwayat').addEventListener('click', async () => {
-    document.getElementById('modalBayar').classList.remove('show');
-    const noRumah = `${currentBlok}${currentIndex.no}`;
-    const periode = currentIndex.periode;
-    
-    document.getElementById('judulRiwayat').textContent = `Riwayat — ${noRumah}`;
-    const wadah = document.getElementById('daftarRiwayat');
-    wadah.innerHTML = '<div class="memuat">Memuat...</div>';
-    document.getElementById('modalRiwayat').classList.add('show');
-
-    try {
-        const snapshot = await db.collection('iuran')
-            .where('periode', '==', periode)
-            .get();
-
-        const hasil = [];
-        snapshot.forEach(doc => {
-            const d = doc.data();
-            if (d.noRumah === noRumah) {
-                hasil.push(d);
-            }
-        });
-
-        if (hasil.length === 0) {
-            wadah.innerHTML = `<p style="text-align:center; color:#888; padding:30px 15px;">Rumah ini belum ada riwayat</p>`;
-            return;
-        }
-
-        hasil.sort((a, b) => {
-            const ta = a.waktuDiubah?.toDate ? a.waktuDiubah.toDate() : new Date(0);
-            const tb = b.waktuDiubah?.toDate ? b.waktuDiubah.toDate() : new Date(0);
-            return tb - ta;
-        });
-
-        let html = '';
-        hasil.forEach(d => {
-            html += `<div class="item-riwayat">
-                <div class="nama">${d.namaPengguna || d.diubahOleh || 'Tidak diketahui'}</div>
-                <div>Tanggal bayar: ${d.tanggal || '-'}</div>
-                <div class="waktu">Diubah: ${formatTanggal(d.waktuDiubah)}</div>
-            </div>`;
-        });
-        wadah.innerHTML = html;
-    } catch (err) {
-        console.error('Error riwayat:', err);
-        wadah.innerHTML = `<p style="text-align:center; color:#ff3b30; padding:30px 15px;">⚠️ Gagal memuat riwayat</p>`;
+    // Tabs
+    function renderTabs() {
+      const container = document.getElementById('tabContainer');
+      container.innerHTML = '';
+      Object.keys(HOUSING_DATA).forEach(block => {
+        const btn = document.createElement('button');
+        btn.className = `tab-btn ${block === activeBlock ? 'active' : ''}`;
+        btn.innerText = block;
+        btn.onclick = () => { activeBlock = block; renderTabs(); renderGrid(); };
+        container.appendChild(btn);
+      });
     }
-});
 
-document.getElementById('btnTutupRiwayat').addEventListener('click', () => {
-    document.getElementById('modalRiwayat').classList.remove('show');
-});
+    // Grid Rumah
+    function renderGrid() {
+      const container = document.getElementById('gridContainer');
+      container.innerHTML = '';
+      const period = monthPicker.value;
 
-// === KONFIRMASI KATA SANDI UNTUK URUNG & RESET ===
-let tindakanLulus = null;
+      let paidCount = 0;
+      const houses = HOUSING_DATA[activeBlock];
 
-function tutupDanLanjut(aksi, teks) {
-    tindakanLulus = aksi;
-    document.getElementById('teksKonfirmasi').textContent = teks;
-    document.getElementById('inputSandiAksi').value = '';
-    document.getElementById('modalSandi').classList.add('show');
-}
+      houses.forEach(houseNum => {
+        const key = `${period}_${activeBlock}_${houseNum}`;
+        const data = records[key];
+        const isPaid = !!data;
 
-document.getElementById('btnUrung').addEventListener('click', () => {
-    tutupDanLanjut('resetBlok', `Yakin urungkan semua Blok ${currentBlok}?`);
-});
+        if (isPaid) paidCount++;
 
-document.getElementById('btnResetBulan').addEventListener('click', () => {
-    if (penggunaSaatIni.blok !== 'SEMUA') { alert('❌ Hanya Admin!'); return; }
-    tutupDanLanjut('resetBulan', '⚠️ Hapus SEMUA data bulan ini?');
-});
+        const box = document.createElement('div');
+        box.className = `house-box ${isPaid ? 'green' : 'red'}`;
+        box.onclick = () => openModal('paymentModal', houseNum, isPaid, data ? data.date : null);
 
-document.getElementById('btnBatalAksi').addEventListener('click', () => {
-    document.getElementById('modalSandi').classList.remove('show');
-    tindakanLulus = null;
-});
+        box.innerHTML = `
+          <div class="num">${houseNum}</div>
+          <div class="status">${isPaid ? formatDate(data.date) : 'Belum Bayar'}</div>
+        `;
 
-document.getElementById('btnKonfirmasiAksi').addEventListener('click', async () => {
-    if (document.getElementById('inputSandiAksi').value !== penggunaSaatIni.sandi) { 
-        alert('❌ Kata sandi salah!'); 
-        return; 
+        container.appendChild(box);
+      });
+
+      // Update Summary
+      document.getElementById('summaryText').innerHTML = `
+        Sudah: <span class="green">${paidCount}/${houses.length}</span> &nbsp; 
+        Belum: <span class="blue">${houses.length - paidCount}/${houses.length}</span>
+      `;
     }
-    document.getElementById('modalSandi').classList.remove('show');
-    
-    const periode = document.getElementById('monthSelect').value;
-    
-    if (tindakanLulus === 'resetBlok') {
-        if (!bolehUbahBlok(currentBlok)) { alert('❌ Bukan blok Anda!'); return; }
-        const snap = await db.collection('iuran').where('periode','==',periode).where('blok','==',currentBlok).get();
-        await Promise.all(snap.docs.map(d => d.ref.delete()));
-        alert(`✅ Blok ${currentBlok} dikosongkan`);
-    }
-    
-    if (tindakanLulus === 'resetBulan') {
-        const snap = await db.collection('iuran').where('periode','==',periode).get();
-        await Promise.all(snap.docs.map(d => d.ref.delete()));
-        alert(`✅ Semua data dihapus`);
-    }
-    
-    tindakanLulus = null;
-});
 
-document.getElementById('btnReload').addEventListener('click', () => {
-    currentTab === 'rekap' ? tampilkanRekap() : tampilkanGrid();
-    tampilkanNotifikasi('✅ Disegarkan', 'Data terbaru dimuat');
-});
+    // Payment Modal
+    function openModal(modalId, houseNum, isPaid, date) {
+      selectedHouse = houseNum;
+      document.getElementById('modalTitle').innerText = `Rumah ${houseNum} (${activeBlock})`;
+      document.getElementById('payDate').value = date || new Date().toISOString().split('T')[0];
+      document.getElementById('btnReset').style.display = isPaid ? 'block' : 'none';
+      document.getElementById(modalId).style.display = 'flex';
+    }
 
-document.getElementById('monthSelect').addEventListener('change', () => {
-    currentTab === 'rekap' ? tampilkanRekap() : tampilkanGrid();
-});
-</script>
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+
+    function savePayment() {
+      const date = document.getElementById('payDate').value;
+      if (!date) return alert('Pilih tanggal pembayaran!');
+      const key = `${monthPicker.value}_${activeBlock}_${selectedHouse}`;
+      records[key] = { status: true, date: date };
+      localStorage.setItem('iuran_data', JSON.stringify(records));
+      closeModal('paymentModal');
+      renderGrid();
+    }
+
+    function resetPayment() {
+      const key = `${monthPicker.value}_${activeBlock}_${selectedHouse}`;
+      delete records[key];
+      localStorage.setItem('iuran_data', JSON.stringify(records));
+      closeModal('paymentModal');
+      renderGrid();
+    }
+
+    // Settings Modal & User Management
+    function openSettingsModal() {
+      renderUserTable();
+      document.getElementById('settingsModal').style.display = 'flex';
+    }
+
+    function renderUserTable() {
+      const tbody = document.getElementById('userTableBody');
+      tbody.innerHTML = '';
+      users.forEach((u, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${u.username}</strong></td>
+          <td>${u.role}</td>
+          <td>
+            <button class="btn-del" onclick="deleteUser(${index})">Hapus</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function saveUser() {
+      const uInput = document.getElementById('newUsername').value.trim();
+      const pInput = document.getElementById('newPassword').value.trim();
+      const rInput = document.getElementById('newRole').value;
+
+      if (!uInput || !pInput) return alert('Username dan password wajib diisi!');
+
+      const existingIndex = users.findIndex(u => u.username === uInput);
+      if (existingIndex >= 0) {
+        users[existingIndex] = { username: uInput, password: pInput, role: rInput };
+      } else {
+        users.push({ username: uInput, password: pInput, role: rInput });
+      }
+
+      localStorage.setItem('iuran_users', JSON.stringify(users));
+      document.getElementById('newUsername').value = '';
+      document.getElementById('newPassword').value = '';
+      renderUserTable();
+      alert('Data akun berhasil disimpan!');
+    }
+
+    function deleteUser(index) {
+      if (users[index].username === 'Administrator') {
+        return alert('Akun Administrator utama tidak boleh dihapus!');
+      }
+      if (confirm(`Hapus akun ${users[index].username}?`)) {
+        users.splice(index, 1);
+        localStorage.setItem('iuran_users', JSON.stringify(users));
+        renderUserTable();
+      }
+    }
+
+    function logout() {
+      alert('Berhasil keluar.');
+      // Untuk demo, reset kembali ke administrator
+      sessionStorage.setItem('current_user', JSON.stringify({ username: 'Administrator', role: 'Administrator' }));
+      location.reload();
+    }
+
+    function formatDate(str) {
+      if (!str) return 'Lunas';
+      const p = str.split('-');
+      return `${p[2]}/${p[1]}`;
+    }
+  </script>
 </body>
 </html>
