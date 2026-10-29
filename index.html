@@ -29,6 +29,33 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; transition: background-color 0.2s, color 0.2s; }
     body { background-color: var(--bg-body); color: var(--text-main); padding-bottom: 40px; }
 
+    /* Login Screen Overlay */
+    .login-wrapper {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-body);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .login-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      width: 100%;
+      max-width: 360px;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .login-box h2 { font-size: 18px; font-weight: 800; margin-bottom: 4px; color: var(--text-main); }
+    .login-box p { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+    .login-box label { display: block; text-align: left; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+    .login-box input { width: 100%; padding: 10px; background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; margin-bottom: 14px; outline: none; }
+    .login-box button { width: 100%; padding: 12px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+
     /* Top Bar Header */
     .top-bar { max-width: 600px; margin: 0 auto; padding: 12px 16px; display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
     .top-bar-left, .top-bar-right { display: flex; gap: 8px; align-items: center; }
@@ -44,7 +71,7 @@
     /* Main Container */
     .app-container { max-width: 600px; margin: 0 auto; padding: 0 16px; }
 
-    /* Banner Banner Header */
+    /* Banner Header */
     .hero-banner { background: linear-gradient(135deg, #0284c7, #2563eb); color: #ffffff; padding: 20px 16px; border-radius: 16px; text-align: center; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
     .hero-banner h1 { font-size: 16px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
     .hero-banner h2 { font-size: 14px; font-weight: 700; margin-top: 2px; text-transform: uppercase; }
@@ -121,7 +148,7 @@
     body.dark .btn-reset { background: #451a1a; color: #fca5a5; }
     .btn-cancel { background: var(--bg-subcard); color: var(--text-muted); }
 
-    /* User List Table in Settings */
+    /* User Table in Settings */
     .user-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 12px; }
     .user-table th, .user-table td { border: 1px solid var(--border-color); padding: 8px; text-align: left; }
     .user-table th { background: var(--bg-subcard); color: var(--text-main); }
@@ -130,53 +157,75 @@
 </head>
 <body>
 
-  <!-- Top Bar -->
-  <div class="top-bar">
-    <div class="top-bar-left">
-      <div class="badge-user">
-        👤 <span id="displayUser">Administrator</span>
-      </div>
-    </div>
-    <div class="top-bar-right">
-      <button class="btn-top btn-dark-toggle" onclick="toggleDarkMode()">
-        <span id="darkIcon">🌙</span> <span id="darkText">Gelap</span>
-      </button>
-      <button class="btn-top btn-refresh" onclick="renderGrid()">Segarkan</button>
-      <button class="btn-top btn-logout" onclick="logout()">Keluar</button>
-      <!-- Tombol Gear Pengaturan Khusus Admin -->
-      <button id="btnGear" class="btn-top btn-settings" onclick="openSettingsModal()" style="display: none;" title="Pengaturan Petugas">⚙️</button>
+  <!-- Screen Login -->
+  <div id="loginScreen" class="login-wrapper">
+    <div class="login-box">
+      <h2>Masuk Petugas</h2>
+      <p>Iuran Paradise Residence 4</p>
+      
+      <label for="loginUsername">Username:</label>
+      <input type="text" id="loginUsername" placeholder="Masukkan username">
+
+      <label for="loginPassword">Password:</label>
+      <input type="password" id="loginPassword" placeholder="Masukkan password">
+
+      <button onclick="handleLogin()">Masuk Kebagian Iuran</button>
+      <p style="font-size: 11px; color: var(--text-muted); margin-top: 15px; margin-bottom: 0;">
+        Default Admin: <b>admin</b> / <b>admin</b><br>
+        Default Petugas: <b>petugas</b> / <b>petugas</b>
+      </p>
     </div>
   </div>
 
-  <div class="app-container">
-    <!-- Hero Banner -->
-    <div class="hero-banner">
-      <h1>Iuran Rutin</h1>
-      <h2>Perumahan Paradise Residence 4</h2>
-      <p>JL. HAJI UMAR — KAMPAK — PANGKALPINANG</p>
-      <div class="badge-status">✓ Terhubung & Terbaru</div>
-    </div>
-
-    <!-- Controls -->
-    <div class="control-card">
-      <div class="period-row">
-        <label for="monthPicker">Periode:</label>
-        <input type="month" id="monthPicker">
-        <div class="legend-box">
-          <div class="legend-item"><span class="dot dot-green"></span> Sudah</div>
-          <div class="legend-item"><span class="dot dot-red"></span> Belum</div>
+  <!-- Main Content (Sembunyi sebelum Login) -->
+  <div id="mainApp" style="display: none;">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <div class="badge-user">
+          👤 <span id="displayUser">Administrator</span>
         </div>
       </div>
-
-      <!-- Tab Blok -->
-      <div class="tab-container" id="tabContainer"></div>
-
-      <!-- Summary -->
-      <div class="summary-text" id="summaryText">Sudah: 0/50 &nbsp; Belum: 50/50</div>
+      <div class="top-bar-right">
+        <button class="btn-top btn-dark-toggle" onclick="toggleDarkMode()">
+          <span id="darkIcon">🌙</span> <span id="darkText">Gelap</span>
+        </button>
+        <button class="btn-top btn-refresh" onclick="renderGrid()">Segarkan</button>
+        <button class="btn-top btn-logout" onclick="logout()">Keluar</button>
+        <button id="btnGear" class="btn-top btn-settings" onclick="openSettingsModal()" style="display: none;" title="Pengaturan Petugas">⚙️</button>
+      </div>
     </div>
 
-    <!-- Grid 50 Rumah -->
-    <div class="grid-houses" id="gridContainer"></div>
+    <div class="app-container">
+      <!-- Hero Banner -->
+      <div class="hero-banner">
+        <h1>Iuran Rutin</h1>
+        <h2>Perumahan Paradise Residence 4</h2>
+        <p>JL. HAJI UMAR — KAMPAK — PANGKALPINANG</p>
+        <div class="badge-status">✓ Terhubung & Terbaru</div>
+      </div>
+
+      <!-- Controls -->
+      <div class="control-card">
+        <div class="period-row">
+          <label for="monthPicker">Periode:</label>
+          <input type="month" id="monthPicker">
+          <div class="legend-box">
+            <div class="legend-item"><span class="dot dot-green"></span> Sudah</div>
+            <div class="legend-item"><span class="dot dot-red"></span> Belum</div>
+          </div>
+        </div>
+
+        <!-- Tab Blok -->
+        <div class="tab-container" id="tabContainer"></div>
+
+        <!-- Summary -->
+        <div class="summary-text" id="summaryText">Sudah: 0/50 &nbsp; Belum: 50/50</div>
+      </div>
+
+      <!-- Grid 50 Rumah -->
+      <div class="grid-houses" id="gridContainer"></div>
+    </div>
   </div>
 
   <!-- Modal Pilih Tanggal Bayar -->
@@ -234,15 +283,14 @@
   </div>
 
   <script>
-    // Data Pengguna Bawaan
+    // Initial Default Users
     const defaultUsers = [
-      { username: 'Administrator', password: 'adminpassword', role: 'Administrator' },
-      { username: 'Petugas Blok A', password: 'user123', role: 'Petugas' },
-      { username: 'Petugas Blok B', password: 'user123', role: 'Petugas' }
+      { username: 'admin', password: 'admin', role: 'Administrator' },
+      { username: 'petugas', password: 'petugas', role: 'Petugas' }
     ];
 
     let users = JSON.parse(localStorage.getItem('iuran_users')) || defaultUsers;
-    let currentUser = JSON.parse(sessionStorage.getItem('current_user')) || { username: 'Administrator', role: 'Administrator' };
+    let currentUser = JSON.parse(sessionStorage.getItem('current_user')) || null;
 
     // Data Rumah
     const HOUSING_DATA = {
@@ -261,23 +309,61 @@
     monthPicker.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Set Mode Gelap jika sebelumnya aktif
+      // Restore Mode Gelap jika ada
       if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark');
         document.getElementById('darkIcon').innerText = '☀️';
         document.getElementById('darkText').innerText = 'Terang';
       }
 
-      // Check Role User
+      // Check Status Login
+      if (currentUser) {
+        showApp();
+      } else {
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('mainApp').style.display = 'none';
+      }
+    });
+
+    // Login Handler
+    function handleLogin() {
+      const uInput = document.getElementById('loginUsername').value.trim();
+      const pInput = document.getElementById('loginPassword').value.trim();
+
+      const userMatch = users.find(u => u.username === uInput && u.password === pInput);
+
+      if (userMatch) {
+        currentUser = userMatch;
+        sessionStorage.setItem('current_user', JSON.stringify(currentUser));
+        showApp();
+      } else {
+        alert('Username atau Password salah!');
+      }
+    }
+
+    function showApp() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'block';
+
       document.getElementById('displayUser').innerText = currentUser.username;
+      
       if (currentUser.role === 'Administrator') {
         document.getElementById('btnGear').style.display = 'flex';
+      } else {
+        document.getElementById('btnGear').style.display = 'none';
       }
 
       renderTabs();
       renderGrid();
       monthPicker.addEventListener('change', renderGrid);
-    });
+    }
+
+    // Logout
+    function logout() {
+      sessionStorage.removeItem('current_user');
+      alert('Berhasil keluar.');
+      location.reload();
+    }
 
     // Dark Mode Toggle
     function toggleDarkMode() {
@@ -411,21 +497,14 @@
     }
 
     function deleteUser(index) {
-      if (users[index].username === 'Administrator') {
-        return alert('Akun Administrator utama tidak boleh dihapus!');
+      if (users[index].username === 'admin') {
+        return alert('Akun admin utama tidak boleh dihapus!');
       }
       if (confirm(`Hapus akun ${users[index].username}?`)) {
         users.splice(index, 1);
         localStorage.setItem('iuran_users', JSON.stringify(users));
         renderUserTable();
       }
-    }
-
-    function logout() {
-      alert('Berhasil keluar.');
-      // Untuk demo, reset kembali ke administrator
-      sessionStorage.setItem('current_user', JSON.stringify({ username: 'Administrator', role: 'Administrator' }));
-      location.reload();
     }
 
     function formatDate(str) {
